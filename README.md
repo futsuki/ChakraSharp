@@ -1,28 +1,28 @@
 # ChakraSharp
 ChakraCore wrapper in C#
 
-¡‚Ì‚Æ‚±‚ëLinux‚È‚Ç‚Å‚ÌƒlƒCƒeƒBƒuƒoƒCƒiƒŠƒ‰ƒCƒuƒ‰ƒŠ‚Æ‚Ì˜AŒg•û–@‚ÉÚ‚µ‚­‚È‚¢‚Ì‚Åwindows‚Å‚µ‚©ŽŽ‚µ‚Ä‚¨‚è‚Ü‚¹‚ñB
+ä»Šã®ã¨ã“ã‚Linuxãªã©ã§ã®ãƒã‚¤ãƒ†ã‚£ãƒ–ãƒã‚¤ãƒŠãƒªãƒ©ã‚¤ãƒ–ãƒ©ãƒªã¨ã®é€£æºæ–¹æ³•ã«è©³ã—ããªã„ã®ã§windowsã§ã—ã‹è©¦ã—ã¦ãŠã‚Šã¾ã›ã‚“ã€‚
 
 
 ##Examples
 ###Simple
 ```C#
-var c = new Controller();
+var c = new ChakraSharp.Controller();
 c.Evaluate("function jsfun1(v) { return +v + 100; };");
-Console.WriteLine(c.Evaluate("jsfun1(10)").ToDouble());
+System.Console.WriteLine(c.Evaluate("jsfun1(10)").ToDouble());
 //-> 110
 ```
 ###CLR Type Wrapping
 ```C#
-var c = new Controller();
-c.Global["clrmath"] = Port.Util.WrapType(typeof(Math));
-Console.WriteLine(c.Evaluate("clrmath.Sin(0.1)").ToDouble());
+var c = new ChakraSharp.Controller();
+c.Global["clrmath"] = ChakraSharp.Port.Util.WrapType(typeof(System.Math));
+System.Console.WriteLine(c.Evaluate("clrmath.Sin(0.1)").ToDouble());
 //-> 0.09983341664
 ```
 ###CLR Namespace Wrapping
 ```C#
-var c = new Controller();
-c.Global["System"] = Port.Util.WrapNamespace("System");
+var c = new ChakraSharp.Controller();
+c.Global["System"] = ChakraSharp.Port.Util.WrapNamespace("System");
 var js = @"
 (function() {
 var sb = new System.Text.StringBuilder();
@@ -32,22 +32,22 @@ sb.Append(123);
 return sb.ToString();
 })()
 ";
-Console.WriteLine(c.Evaluate(js).ToString());
+System.Console.WriteLine(c.Evaluate(js).ToString());
 //-> abcABC123
 ```
 ###JS Function Wrapping & Invoking
 ```C#
-var c = new Controller();
+var c = new ChakraSharp.Controller();
 c.Evaluate("function jsfun1(v) { return +v + 100; };");
-Func<double, double> jsfun1 = c.Global["jsfun1"].ConvertTo<Func<double, double>>();
+System.Func<double, double> jsfun1 = c.Global["jsfun1"].ConvertTo<System.Func<double, double>>();
 Console.WriteLine(jsfun1(40));
 //-> 140
 ```
 ###Javascript Value Transportation
 ```C#
-var c = new Controller();
-JSValue jsval = c.Evaluate("({a:2})");
-var fun = c.Evaluate("(function (v) { return v.a; })").ConvertTo<Func<JSValue, double>>();
-Console.WriteLine(fun(jsval));
+var c = new ChakraSharp.Controller();
+ChakraSharp.JSValue jsval = c.Evaluate("({a:2})");
+var fun = c.Evaluate("(function (v) { return v.a; })").ConvertTo<System.Func<JSValue, double>>();
+System.Console.WriteLine(fun(jsval));
 //-> 2
 ```
