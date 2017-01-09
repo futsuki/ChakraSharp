@@ -329,6 +329,17 @@ return sb.ToString();
             }
         }
 
+        [TestMethod()]
+        public void PortTest2()
+        {
+            using (var c = MakeController())
+            {
+                var jsval = c.Evaluate("({a:2})");
+                var fun = c.Evaluate("(function (v) { return v.a; })").ConvertTo<Func<JSValue, double>>();
+                Assert.IsTrue(fun(jsval) == 2);
+            }
+        }
+
         JavaScriptValue Log(JavaScriptValue callee,
             [MarshalAs(UnmanagedType.U1)] bool isConstructCall,
             [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] JavaScriptValue[] arguments,
