@@ -56,7 +56,7 @@ Console.WriteLine(jsfun1(40));
 ```C#
 var c = new ChakraSharp.Controller();
 ChakraSharp.JSValue jsval = c.Evaluate("({a:2})");
-var fun = c.Evaluate("(function (v) { return v.a; })").ConvertTo<System.Func<JSValue, double>>();
+var fun = c.Evaluate("(function (v) { return v.a; })").ConvertTo<System.Func<ChakraSharp.JSValue, double>>();
 System.Console.WriteLine(fun(jsval));
 //-> 2
 ```
