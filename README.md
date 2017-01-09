@@ -36,6 +36,14 @@ return sb.ToString();
 System.Console.WriteLine(c.Evaluate(js).ToString());
 //-> abcABC123
 ```
+###JS Function Calling
+```C#
+var c = new ChakraSharp.Controller();
+var o = c.Evaluate("({a:1, b:2})");
+var f = c.Evaluate("(function(v){ return this.a + this.b + v; })");
+System.Console.WriteLine(f.Call(o, 10).ToDouble());
+//-> 13
+```
 ###JS Function Wrapping & Invoking
 ```C#
 var c = new ChakraSharp.Controller();
