@@ -3,6 +3,7 @@ ChakraCore wrapper in C#
 
 今のところLinuxなどでのネイティブバイナリライブラリとの連携方法に詳しくないのでwindowsでしか試しておりません。
 
+.NET 3.5 で動作テストしております。
 
 ##Examples
 ###Simple
