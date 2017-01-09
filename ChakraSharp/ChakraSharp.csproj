@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{A315A81E-C020-4E83-B872-B45460EBB97A}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ChakraSharp</RootNamespace>
+    <AssemblyName>ChakraSharp</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ChakraSharpException.cs" />
+    <Compile Include="Controller.cs" />
+    <Compile Include="Hosting\JavaScriptBackgroundWorkItemCallback.cs" />
+    <Compile Include="Hosting\JavaScriptBeforeCollectCallback.cs" />
+    <Compile Include="Hosting\JavaScriptContext.cs" />
+    <Compile Include="Hosting\JavaScriptEngineException.cs" />
+    <Compile Include="Hosting\JavaScriptErrorCode.cs" />
+    <Compile Include="Hosting\JavaScriptException.cs" />
+    <Compile Include="Hosting\JavaScriptFatalException.cs" />
+    <Compile Include="Hosting\JavaScriptMemoryAllocationCallback.cs" />
+    <Compile Include="Hosting\JavaScriptMemoryEventType.cs" />
+    <Compile Include="Hosting\JavaScriptNativeFunction.cs" />
+    <Compile Include="Hosting\JavaScriptObjectBeforeCollectCallback.cs" />
+    <Compile Include="Hosting\JavaScriptObjectFinalizeCallback.cs" />
+    <Compile Include="Hosting\JavaScriptPromiseContinuationCallback.cs" />
+    <Compile Include="Hosting\JavaScriptPropertyId.cs" />
+    <Compile Include="Hosting\JavaScriptPropertyIdType.cs" />
+    <Compile Include="Hosting\JavaScriptRuntime.cs" />
+    <Compile Include="Hosting\JavaScriptRuntimeAttributes.cs" />
+    <Compile Include="Hosting\JavaScriptRuntimeVersion.cs" />
+    <Compile Include="Hosting\JavaScriptScriptException.cs" />
+    <Compile Include="Hosting\JavaScriptSerializedScriptLoadSourceCallback.cs" />
+    <Compile Include="Hosting\JavaScriptSerializedScriptUnloadCallback.cs" />
+    <Compile Include="Hosting\JavaScriptSourceContext.cs" />
+    <Compile Include="Hosting\JavaScriptThreadServiceCallback.cs" />
+    <Compile Include="Hosting\JavaScriptTypedArrayType.cs" />
+    <Compile Include="Hosting\JavaScriptUsageException.cs" />
+    <Compile Include="Hosting\JavaScriptValue.cs" />
+    <Compile Include="Hosting\JavaScriptValueType.cs" />
+    <Compile Include="Hosting\Native.cs" />
+    <Compile Include="JSValue.cs" />
+    <Compile Include="Port.cs" />
+    <Compile Include="Port\FunctionWrapper.cs" />
+    <Compile Include="Port\JSFunctionInvoker.cs" />
+    <Compile Include="Port\NamespaceWrapper.cs" />
+    <Compile Include="Port\OverloadSelector.cs" />
+    <Compile Include="Port\TypeWrapper.cs" />
+    <Compile Include="Port\Util.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ChakraCore.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="ChakraCore.pdb">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
