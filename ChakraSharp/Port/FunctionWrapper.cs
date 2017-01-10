@@ -49,7 +49,7 @@ namespace ChakraSharp.Port
         public JavaScriptValue GetJavaScriptValue()
         {
             if (!jsvalue.IsValid)
-                jsvalue = JavaScriptValue.CreateFunction(Wrap());
+                jsvalue = JavaScriptValue.CreateFunction(Wrap(), GCHandle.ToIntPtr(GCHandle.Alloc(this)));
             return jsvalue;
         }
 
@@ -59,7 +59,7 @@ namespace ChakraSharp.Port
         }
 
         Func<JavaScriptValue[], object> wrapdg;
-        JavaScriptValue body(JavaScriptValue callee,
+        static JavaScriptValue body(JavaScriptValue callee,
             [MarshalAs(UnmanagedType.U1)] bool isConstructCall,
             [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] JavaScriptValue[] arguments,
             ushort argumentCount,
@@ -67,21 +67,26 @@ namespace ChakraSharp.Port
         {
             try
             {
+                var that = (FunctionWrapper)GCHandle.FromIntPtr(callbackData).Target;
                 //Console.WriteLine("called "+GetName());
-                if (constructOnly && !isConstructCall)
+                if (that.constructOnly && !isConstructCall)
                 {
                     return JavaScriptValue.Undefined;
                     //Native.JsSetException(JavaScriptValue.CreateError(JavaScriptValue.FromString(string.Format("Construct only function: {0}", GetName()))));
                     //return JavaScriptValue.Invalid;
                 }
-                if (arguments.Length - 1 != neededArgumentsCount)
+                if (arguments.Length - 1 != that.neededArgumentsCount)
                 {
-                    Native.JsSetException(JavaScriptValue.CreateError(JavaScriptValue.FromString(string.Format("Argument count is not satisfacted. needs {0}, got {1}: {2}", neededArgumentsCount, arguments.Length - 1, GetName()))));
+                    Native.JsSetException(
+                        JavaScriptValue.CreateError(
+                            JavaScriptValue.FromString(
+                                string.Format("Argument count is not satisfacted. needs {0}, got {1}: {2}",
+                                that.neededArgumentsCount, arguments.Length - 1, that.GetName()))));
                     return JavaScriptValue.Invalid;
                 }
-                if (wrapdg == null)
-                    wrapdg = WrapFirst();
-                var obj = wrapdg(arguments);
+                if (that.wrapdg == null)
+                    that.wrapdg = that.WrapFirst();
+                var obj = that.wrapdg(arguments);
                 var v = JSValue.Make(obj).rawvalue;
                 if (isConstructCall)
                 {

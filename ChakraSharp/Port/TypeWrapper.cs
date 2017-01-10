@@ -46,7 +46,7 @@ namespace ChakraSharp.Port
             else if (ctors.Length == 1)
             {
                 var ctorw = new ConstructorWrapper(ctors[0]);
-                constructorValue = JavaScriptValue.CreateFunction(ctorw.Wrap());
+                constructorValue = JavaScriptValue.CreateFunction(ctorw.Wrap(), GCHandle.ToIntPtr(GCHandle.Alloc(ctorw)));
             }
             else
             {
@@ -55,7 +55,7 @@ namespace ChakraSharp.Port
                 {
                     os.AppendMethod(m);
                 }
-                constructorValue = JavaScriptValue.CreateFunction(os.Wrap());
+                constructorValue = JavaScriptValue.CreateFunction(os.Wrap(), GCHandle.ToIntPtr(GCHandle.Alloc(os)));
             }
             prototypeValue = JavaScriptValue.CreateObject();
 
@@ -88,7 +88,8 @@ namespace ChakraSharp.Port
                 {
                     var m = ms[0];
                     var smw = (m.IsStatic) ? (FunctionWrapper)new StaticMethodWrapper(m) : (FunctionWrapper)new InstanceMethodWrapper(m);
-                    setTo.SetIndexedProperty(JavaScriptValue.FromString(m.Name), JavaScriptValue.CreateFunction(smw.Wrap()));
+                    setTo.SetIndexedProperty(JavaScriptValue.FromString(m.Name),
+                        JavaScriptValue.CreateFunction(smw.Wrap(), GCHandle.ToIntPtr(GCHandle.Alloc(smw))));
                     var val = setTo.GetIndexedProperty(JavaScriptValue.FromString(m.Name));
                     //Console.WriteLine("set " + type.Name + "." + methodName);
                     //Console.WriteLine("seted " + val.ConvertToString().ToString());
@@ -100,7 +101,8 @@ namespace ChakraSharp.Port
                     {
                         os.AppendMethod(m);
                     }
-                    setTo.SetIndexedProperty(JavaScriptValue.FromString(os.GetName()), JavaScriptValue.CreateFunction(os.Wrap()));
+                    setTo.SetIndexedProperty(JavaScriptValue.FromString(os.GetName()),
+                        JavaScriptValue.CreateFunction(os.Wrap(), GCHandle.ToIntPtr(GCHandle.Alloc(os))));
                     var val = setTo.GetIndexedProperty(JavaScriptValue.FromString(os.GetName()));
                     //Console.WriteLine("ol set " + type.Name + "." + methodName);
                     //Console.WriteLine("seted " + val.ConvertToString().ToString());
@@ -109,7 +111,7 @@ namespace ChakraSharp.Port
             }
         }
 
-        JavaScriptValue NoConstructor(JavaScriptValue callee,
+        static JavaScriptValue NoConstructor(JavaScriptValue callee,
             [MarshalAs(UnmanagedType.U1)] bool isConstructCall,
             [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] JavaScriptValue[] arguments,
             ushort argumentCount,
@@ -117,7 +119,8 @@ namespace ChakraSharp.Port
         {
             try
             {
-                Native.JsSetException(JavaScriptValue.CreateError(JavaScriptValue.FromString(type.Name + " has no constructor")));
+                var that = (TypeWrapper)GCHandle.FromIntPtr(callbackData).Target;
+                Native.JsSetException(JavaScriptValue.CreateError(JavaScriptValue.FromString(that.type.Name + " has no constructor")));
                 return JavaScriptValue.Invalid;
             }
             catch (Exception e)

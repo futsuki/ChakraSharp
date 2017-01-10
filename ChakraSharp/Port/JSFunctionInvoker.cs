@@ -14,7 +14,7 @@ namespace ChakraSharp.Port
     {
         public JavaScriptValue val;
         public Type outType;
-        public object body(object[] o)
+        object body(object[] o)
         {
 
             JavaScriptValue res;

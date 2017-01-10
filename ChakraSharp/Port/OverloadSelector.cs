@@ -24,6 +24,7 @@ namespace ChakraSharp.Port
             }
             public FunctionWrapper entityWrapper;
             public JavaScriptNativeFunction cachedFunction;
+            public IntPtr cachedData;
 
             public OverloadEntry(MethodBase mi)
             {
@@ -52,6 +53,7 @@ namespace ChakraSharp.Port
 
                 cachedFunction = null;
                 entityWrapper = null;
+                cachedData = IntPtr.Zero;
                 if (mi is ConstructorInfo)
                 {
                     entityWrapper = new ConstructorWrapper((ConstructorInfo)mi);
@@ -220,7 +222,7 @@ namespace ChakraSharp.Port
             return body;
         }
 
-        JavaScriptValue body(JavaScriptValue callee,
+        static JavaScriptValue body(JavaScriptValue callee,
             [MarshalAs(UnmanagedType.U1)] bool isConstructCall,
             [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] JavaScriptValue[] arguments,
             ushort argumentCount,
@@ -228,11 +230,12 @@ namespace ChakraSharp.Port
         {
             try
             {
+                var that = (OverloadSelector)GCHandle.FromIntPtr(callbackData).Target;
                 var lastIdx = -1;
                 var lowestScore = OverloadEntry.DENIED - 1;
-                for (int i = 0; i < methodInfos.Count; i++)
+                for (int i = 0; i < that.methodInfos.Count; i++)
                 {
-                    var mi = methodInfos[i];
+                    var mi = that.methodInfos[i];
                     var score = mi.GetArgumentsScore(arguments);
                     if (lowestScore > score)
                     {
@@ -251,11 +254,13 @@ namespace ChakraSharp.Port
                     Native.JsSetException(JavaScriptValue.CreateError(JavaScriptValue.FromString("ambiguous overload")));
                     return JavaScriptValue.Invalid;
                 }
-                var method = methodInfos[lastIdx];
+                var method = that.methodInfos[lastIdx];
                 //Console.WriteLine("Overload selected: " + string.Join(", ", method.ps.Skip(1).Select(e => e.parameterType.ToString()).ToArray()));
                 if (method.cachedFunction == null)
                     method.cachedFunction = method.entityWrapper.Wrap();
-                return method.cachedFunction(callee, isConstructCall, arguments, argumentCount, callbackData);
+                if (method.cachedData == IntPtr.Zero)
+                    method.cachedData = GCHandle.ToIntPtr(GCHandle.Alloc(method.entityWrapper));
+                return method.cachedFunction(callee, isConstructCall, arguments, argumentCount, method.cachedData);
             }
             catch (Exception e)
             {
