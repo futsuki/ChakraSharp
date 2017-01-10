@@ -340,6 +340,17 @@ return sb.ToString();
             }
         }
 
+        [TestMethod()]
+        public void ActionTest()
+        {
+            using (var c = MakeController())
+            {
+                c.Global["portoc1"] = Port.Util.WrapType(typeof(TestCls1));
+                c.Evaluate("portoc1.actionFunction()");
+                c.Evaluate("(new portoc1(1)).actionMethod()");
+            }
+        }
+
         JavaScriptValue Log(JavaScriptValue callee,
             [MarshalAs(UnmanagedType.U1)] bool isConstructCall,
             [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] JavaScriptValue[] arguments,
@@ -429,6 +440,14 @@ return sb.ToString();
         static public string overloadedFunction(string n)
         {
             return n + "str";
+        }
+        static public void actionFunction()
+        {
+
+        }
+        public void actionMethod()
+        {
+
         }
     }
     public class TestCls2

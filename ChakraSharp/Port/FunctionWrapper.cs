@@ -171,13 +171,25 @@ namespace ChakraSharp.Port
 
         override public Func<JavaScriptValue[], object> WrapFirst()
         {
-            var parameters = Expression.Parameter(typeof(JavaScriptValue[]), "parameters");
-            var converted = ps.Select((e, i) => ConverterExpression(parameters, i + 1, e.ParameterType)).ToArray();
-            var lam = Expression.Lambda(typeof(Func<JavaScriptValue[], object>),
-                Expression.ConvertChecked(Expression.Call(null, mi, converted), typeof(object)),
-                new[] { parameters });
-            var dg = lam.Compile();
-            return (Func<JavaScriptValue[], object>)dg;
+            if (mi.ReturnType == typeof(void))
+            {
+                // Action は Expression Tree で 呼ぶことができない
+                Func<JavaScriptValue[], object> ret = (values) => {
+                    mi.Invoke(null, values.Skip(1).Select((e, i) => Conv(e, ps[i].ParameterType)).ToArray());
+                    return null;
+                };
+                return ret;
+            }
+            else
+            {
+                var parameters = Expression.Parameter(typeof(JavaScriptValue[]), "parameters");
+                var converted = ps.Select((e, i) => ConverterExpression(parameters, i + 1, e.ParameterType)).ToArray();
+                var lam = Expression.Lambda(typeof(Func<JavaScriptValue[], object>),
+                    Expression.ConvertChecked(Expression.Call(null, mi, converted), typeof(object)),
+                    new[] { parameters });
+                var dg = lam.Compile();
+                return (Func<JavaScriptValue[], object>)dg;
+            }
         }
     }
 
@@ -246,14 +258,28 @@ namespace ChakraSharp.Port
 
         override public Func<JavaScriptValue[], object> WrapFirst()
         {
-            var parameters = Expression.Parameter(typeof(JavaScriptValue[]), "parameters");
-            var thisval = ConverterExpression(parameters, 0, mi.DeclaringType);
-            var converted = ps.Select((e, i) => ConverterExpression(parameters, i + 1, e.ParameterType)).ToArray();
-            var lam = Expression.Lambda(typeof(Func<JavaScriptValue[], object>),
-                Expression.ConvertChecked(Expression.Call(thisval, mi, converted), typeof(object)),
-                new[] { parameters });
-            var dg = lam.Compile();
-            return (Func<JavaScriptValue[], object>)dg;
+            if (mi.ReturnType == typeof(void))
+            {
+                // Action は Expression Tree で 呼ぶことができない
+                Func<JavaScriptValue[], object> ret = (values) =>
+                {
+                    var t = Conv(values[0], mi.DeclaringType);
+                    mi.Invoke(t, values.Skip(1).Select((e, i) => Conv(e, ps[i].ParameterType)).ToArray());
+                    return null;
+                };
+                return ret;
+            }
+            else
+            {
+                var parameters = Expression.Parameter(typeof(JavaScriptValue[]), "parameters");
+                var thisval = ConverterExpression(parameters, 0, mi.DeclaringType);
+                var converted = ps.Select((e, i) => ConverterExpression(parameters, i + 1, e.ParameterType)).ToArray();
+                var lam = Expression.Lambda(typeof(Func<JavaScriptValue[], object>),
+                    Expression.ConvertChecked(Expression.Call(thisval, mi, converted), typeof(object)),
+                    new[] { parameters });
+                var dg = lam.Compile();
+                return (Func<JavaScriptValue[], object>)dg;
+            }
         }
     }
 }
