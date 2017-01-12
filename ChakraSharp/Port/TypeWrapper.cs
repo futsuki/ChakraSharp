@@ -33,8 +33,8 @@ namespace ChakraSharp.Port
         }
 
         Type type;
-        JavaScriptValue constructorValue;
-        JavaScriptValue prototypeValue;
+        public JavaScriptValue constructorValue;
+        public JavaScriptValue prototypeValue;
         TypeWrapper(Type type)
         {
             this.type = type;
@@ -46,7 +46,7 @@ namespace ChakraSharp.Port
             else if (ctors.Length == 1)
             {
                 var ctorw = new ConstructorWrapper(ctors[0]);
-                constructorValue = JavaScriptValue.CreateFunction(ctorw.Wrap(), GCHandle.ToIntPtr(GCHandle.Alloc(ctorw)));
+                constructorValue = ctorw.GetJavaScriptValue();
             }
             else
             {
@@ -55,22 +55,31 @@ namespace ChakraSharp.Port
                 {
                     os.AppendMethod(m);
                 }
-                constructorValue = JavaScriptValue.CreateFunction(os.Wrap(), GCHandle.ToIntPtr(GCHandle.Alloc(os)));
+                constructorValue = os.GetJavaScriptValue();
             }
             prototypeValue = JavaScriptValue.CreateObject();
 
             // statics
             //Console.WriteLine("register static");
-            AssignTableProc(constructorValue,
+            AssignMethodProc(constructorValue,
                 type.GetMethods(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Static));
+            AssignFieldProc(constructorValue,
+                type.GetFields(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Static));
+            AssignPropertyProc(constructorValue,
+                type.GetProperties(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Static));
+            // instances
             //Console.WriteLine("register instance");
-            AssignTableProc(prototypeValue,
+            AssignMethodProc(prototypeValue,
                 type.GetMethods(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Instance));
+            AssignFieldProc(prototypeValue,
+                type.GetFields(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Instance));
+            AssignPropertyProc(prototypeValue,
+                type.GetProperties(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Instance));
 
             constructorValue.SetIndexedProperty(JavaScriptValue.FromString("prototype"), prototypeValue);
         }
 
-        void AssignTableProc(JavaScriptValue setTo, MethodInfo[] methods)
+        void AssignMethodProc(JavaScriptValue setTo, MethodInfo[] methods)
         {
             var methodDic = new Dictionary<string, List<MethodInfo>>();
             foreach (var m in methods)
@@ -88,9 +97,8 @@ namespace ChakraSharp.Port
                 {
                     var m = ms[0];
                     var smw = (m.IsStatic) ? (FunctionWrapper)new StaticMethodWrapper(m) : (FunctionWrapper)new InstanceMethodWrapper(m);
-                    setTo.SetIndexedProperty(JavaScriptValue.FromString(m.Name),
-                        JavaScriptValue.CreateFunction(smw.Wrap(), GCHandle.ToIntPtr(GCHandle.Alloc(smw))));
-                    var val = setTo.GetIndexedProperty(JavaScriptValue.FromString(m.Name));
+                    setTo.SetIndexedProperty(JavaScriptValue.FromString(m.Name), smw.GetJavaScriptValue());
+                    //var val = setTo.GetIndexedProperty(JavaScriptValue.FromString(m.Name));
                     //Console.WriteLine("set " + type.Name + "." + methodName);
                     //Console.WriteLine("seted " + val.ConvertToString().ToString());
                 }
@@ -101,12 +109,204 @@ namespace ChakraSharp.Port
                     {
                         os.AppendMethod(m);
                     }
-                    setTo.SetIndexedProperty(JavaScriptValue.FromString(os.GetName()),
-                        JavaScriptValue.CreateFunction(os.Wrap(), GCHandle.ToIntPtr(GCHandle.Alloc(os))));
-                    var val = setTo.GetIndexedProperty(JavaScriptValue.FromString(os.GetName()));
+                    setTo.SetIndexedProperty(JavaScriptValue.FromString(os.GetName()), os.GetJavaScriptValue());
+                    //var val = setTo.GetIndexedProperty(JavaScriptValue.FromString(os.GetName()));
                     //Console.WriteLine("ol set " + type.Name + "." + methodName);
                     //Console.WriteLine("seted " + val.ConvertToString().ToString());
                     //Console.WriteLine("skip " + type.Name + "." + methodName);
+                }
+            }
+        }
+
+        void AssignFieldProc(JavaScriptValue setTo, FieldInfo[] fields)
+        {
+            var getpropid = JavaScriptPropertyId.FromString("get");
+            var setpropid = JavaScriptPropertyId.FromString("set");
+            foreach (var f in fields)
+            {
+                if (f.IsSpecialName)
+                    continue;
+                var desc = JavaScriptValue.CreateObject();
+                var id = JavaScriptPropertyId.FromString(f.Name);
+                var proxy = new FieldProxy(f);
+                desc.SetProperty(getpropid, JavaScriptValue.CreateFunction(FieldProxy.FieldGetter, GCHandle.ToIntPtr(GCHandle.Alloc(proxy))), true);
+                desc.SetProperty(setpropid, JavaScriptValue.CreateFunction(FieldProxy.FieldSetter, GCHandle.ToIntPtr(GCHandle.Alloc(proxy))), true);
+                setTo.DefineProperty(id, desc);
+            }
+        }
+        class FieldProxy
+        {
+            FieldInfo fi;
+            public FieldProxy(FieldInfo fi)
+            {
+                this.fi = fi;
+            }
+            Func<JavaScriptValue, object> getdg;
+            Action<JavaScriptValue, JavaScriptValue> setdg;
+
+            public static JavaScriptValue FieldGetter(JavaScriptValue callee,
+                [MarshalAs(UnmanagedType.U1)] bool isConstructCall,
+                [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] JavaScriptValue[] arguments,
+                ushort argumentCount,
+                IntPtr callbackData)
+            {
+                try
+                {
+                    var that = (FieldProxy)GCHandle.FromIntPtr(callbackData).Target;
+                    if (that.getdg == null)
+                    {
+                        that.getdg = (obj) =>
+                        {
+                            var objv = FunctionWrapper.Conv(obj, that.fi.DeclaringType);
+                            if (that.fi.IsStatic)
+                            {
+                                return that.fi.GetValue(null);
+                            }
+                            else
+                            {
+                                return that.fi.GetValue(objv);
+                            }
+                        };
+                    }
+                    return JSValue.FromObject(that.getdg(arguments[0])).rawvalue;
+                }
+                catch (Exception e)
+                {
+                    Native.JsSetException(JavaScriptValue.CreateError(JavaScriptValue.FromString(e.ToString())));
+                    return JavaScriptValue.Invalid;
+                }
+            }
+
+            public static JavaScriptValue FieldSetter(JavaScriptValue callee,
+                [MarshalAs(UnmanagedType.U1)] bool isConstructCall,
+                [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] JavaScriptValue[] arguments,
+                ushort argumentCount,
+                IntPtr callbackData)
+            {
+                try
+                {
+                    var that = (FieldProxy)GCHandle.FromIntPtr(callbackData).Target;
+                    if (that.setdg == null)
+                    {
+                        that.setdg = (obj, val) =>
+                        {
+                            var valv = FunctionWrapper.Conv(val, that.fi.FieldType);
+                            if (that.fi.IsStatic)
+                            {
+                                that.fi.SetValue(null, valv);
+                            }
+                            else
+                            {
+                                var objv = FunctionWrapper.Conv(obj, that.fi.DeclaringType);
+                                that.fi.SetValue(objv, valv);
+                            }
+                        };
+                    }
+                    that.setdg(arguments[0], arguments[1]);
+                    return arguments[1];
+                }
+                catch (Exception e)
+                {
+                    Native.JsSetException(JavaScriptValue.CreateError(JavaScriptValue.FromString(e.ToString())));
+                    return JavaScriptValue.Invalid;
+                }
+            }
+        }
+
+
+        void AssignPropertyProc(JavaScriptValue setTo, PropertyInfo[] props)
+        {
+            var getpropid = JavaScriptPropertyId.FromString("get");
+            var setpropid = JavaScriptPropertyId.FromString("set");
+            foreach (var info in props)
+            {
+                if (info.IsSpecialName)
+                    continue;
+                var desc = JavaScriptValue.CreateObject();
+                var id = JavaScriptPropertyId.FromString(info.Name);
+                var proxy = new PropertyProxy(info);
+                desc.SetProperty(getpropid, JavaScriptValue.CreateFunction(PropertyProxy.PropertyGetter, GCHandle.ToIntPtr(GCHandle.Alloc(proxy))), true);
+                desc.SetProperty(setpropid, JavaScriptValue.CreateFunction(PropertyProxy.PropertySetter, GCHandle.ToIntPtr(GCHandle.Alloc(proxy))), true);
+                setTo.DefineProperty(id, desc);
+            }
+        }
+        class PropertyProxy
+        {
+            PropertyInfo pi;
+            public PropertyProxy(PropertyInfo pi)
+            {
+                this.pi = pi;
+            }
+            Func<JavaScriptValue, object> getdg;
+            Action<JavaScriptValue, JavaScriptValue> setdg;
+
+            public static JavaScriptValue PropertyGetter(JavaScriptValue callee,
+                [MarshalAs(UnmanagedType.U1)] bool isConstructCall,
+                [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] JavaScriptValue[] arguments,
+                ushort argumentCount,
+                IntPtr callbackData)
+            {
+                try
+                {
+                    var that = (PropertyProxy)GCHandle.FromIntPtr(callbackData).Target;
+                    if (that.getdg == null)
+                    {
+                        var gettermethod = that.pi.GetGetMethod();
+                        that.getdg = (obj) =>
+                        {
+                            if (gettermethod.IsStatic)
+                            {
+                                return gettermethod.Invoke(null, new object[0]);
+                            }
+                            else
+                            {
+                                var objv = FunctionWrapper.Conv(obj, that.pi.DeclaringType);
+                                return gettermethod.Invoke(objv, new object[0]);
+                            }
+                        };
+                    }
+                    return JSValue.FromObject(that.getdg(arguments[0])).rawvalue;
+                }
+                catch (Exception e)
+                {
+                    Native.JsSetException(JavaScriptValue.CreateError(JavaScriptValue.FromString(e.ToString())));
+                    return JavaScriptValue.Invalid;
+                }
+            }
+
+            public static JavaScriptValue PropertySetter(JavaScriptValue callee,
+                [MarshalAs(UnmanagedType.U1)] bool isConstructCall,
+                [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] JavaScriptValue[] arguments,
+                ushort argumentCount,
+                IntPtr callbackData)
+            {
+                try
+                {
+                    var that = (PropertyProxy)GCHandle.FromIntPtr(callbackData).Target;
+                    if (that.setdg == null)
+                    {
+                        var settermethod = that.pi.GetSetMethod();
+                        that.setdg = (obj, val) =>
+                        {
+                            var valv = FunctionWrapper.Conv(val, that.pi.PropertyType);
+                            if (settermethod.IsStatic)
+                            {
+                                settermethod.Invoke(null, new object[] { valv });
+                            }
+                            else
+                            {
+                                var objv = FunctionWrapper.Conv(obj, that.pi.DeclaringType);
+                                settermethod.Invoke(objv, new object[] { valv });
+                            }
+                        };
+                    }
+                    that.setdg(arguments[0], arguments[1]);
+                    return arguments[1];
+                }
+                catch (Exception e)
+                {
+                    Native.JsSetException(JavaScriptValue.CreateError(JavaScriptValue.FromString(e.ToString())));
+                    return JavaScriptValue.Invalid;
                 }
             }
         }

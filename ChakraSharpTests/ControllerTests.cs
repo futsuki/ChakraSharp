@@ -351,6 +351,59 @@ return sb.ToString();
             }
         }
 
+        [TestMethod()]
+        public void ClassWrapTest1()
+        {
+            using (var c = MakeController())
+            {
+                c.Global["TestClass1"] = Port.Util.WrapType(typeof(TestClass1));
+                c.Evaluate("var obj = new TestClass1()");
+                c.Evaluate("TestClass1.stNumber = 10;");
+                Assert.IsTrue((double)c.Evaluate("(function() { return TestClass1.stNumber; })()").GetObject() == 10);
+                c.Evaluate("TestClass1.stNumprop = 20;");
+                Assert.IsTrue((double)c.Evaluate("(function() { return TestClass1.stNumprop; })()").GetObject() == 20);
+
+                c.Evaluate("obj.number = 30;");
+                Assert.IsTrue((double)c.Evaluate("(function() { return obj.number; })()").GetObject() == 30);
+                c.Evaluate("obj.numprop = 40;");
+                Assert.IsTrue((double)c.Evaluate("(function() { return obj.numprop; })()").GetObject() == 40);
+
+                var obj = (TestClass1)c.Evaluate("obj").GetObject();
+                Assert.IsTrue(TestClass1.stNumber == 10);
+                Assert.IsTrue(TestClass1.stNumprop == 20);
+                Assert.IsTrue(obj.number == 30);
+                Assert.IsTrue(obj.numprop == 40);
+            }
+        }
+        [TestMethod()]
+        public void ClassWrapTest2()
+        {
+            using (var c = MakeController())
+            {
+                c.Global["obj"] = JSValue.FromObject(new TestClass1());
+
+                c.Evaluate("obj.number = 30;");
+                Assert.IsTrue((double)c.Evaluate("(function() { return obj.number; })()").GetObject() == 30);
+                c.Evaluate("obj.numprop = 40;");
+                Assert.IsTrue((double)c.Evaluate("(function() { return obj.numprop; })()").GetObject() == 40);
+
+                var obj = (TestClass1)c.Evaluate("obj").GetObject();
+                Assert.IsTrue(obj.number == 30);
+                Assert.IsTrue(obj.numprop == 40);
+            }
+        }
+
+        public class TestClass1
+        {
+            public static int stNumber;
+            public static int stNumprop { get; set; }
+            public static int stNumprop2 { get; private set; }
+
+            public int number;
+            public int numprop { get; set; }
+            public int numprop2 { get; private set; }
+        }
+
         JavaScriptValue Log(JavaScriptValue callee,
             [MarshalAs(UnmanagedType.U1)] bool isConstructCall,
             [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] JavaScriptValue[] arguments,
@@ -391,7 +444,7 @@ return sb.ToString();
         }
         static public JSValue jvtest1()
         {
-            return JSValue.Make("ss1");
+            return JSValue.FromObject("ss1");
         }
         static public JavaScriptValue jvtest2()
         {
@@ -399,11 +452,11 @@ return sb.ToString();
         }
         static public JSValue jvtest3(TestCls1 o)
         {
-            return JSValue.Make(o.v + 123);
+            return JSValue.FromObject(o.v + 123);
         }
         public JSValue ijvtest1()
         {
-            return JSValue.Make("abc1");
+            return JSValue.FromObject("abc1");
         }
         public JavaScriptValue ijvtest2()
         {

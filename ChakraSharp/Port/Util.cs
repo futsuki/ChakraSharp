@@ -46,7 +46,12 @@ namespace ChakraSharp.Port
             var c = NamespaceWrapper.Get(path);
             return c.GetJavaScriptValue();
         }
-        
+        public static JavaScriptValue WrapObject(object obj)
+        {
+            var o = JSValue.FromObject(obj);
+            return o.rawvalue;
+        }
+
         public static void ClearCache()
         {
             NamespaceWrapper.ClearCache();

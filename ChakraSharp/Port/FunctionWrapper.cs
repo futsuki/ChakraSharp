@@ -10,7 +10,7 @@ using System.Reflection;
 
 namespace ChakraSharp.Port
 {
-    abstract public class FunctionWrapper
+    abstract public class FunctionWrapper : IDisposable
     {
         abstract public Func<JavaScriptValue[], object> WrapFirst();
         abstract public string GetName();
@@ -46,11 +46,24 @@ namespace ChakraSharp.Port
         }
 
         JavaScriptValue jsvalue;
+        GCHandle thisPtr;
         public JavaScriptValue GetJavaScriptValue()
         {
+            if (!thisPtr.IsAllocated)
+            {
+                thisPtr = GCHandle.Alloc(this);
+            }
             if (!jsvalue.IsValid)
-                jsvalue = JavaScriptValue.CreateFunction(Wrap(), GCHandle.ToIntPtr(GCHandle.Alloc(this)));
+            {
+                jsvalue = JavaScriptValue.CreateFunction(Wrap(), GCHandle.ToIntPtr(thisPtr));
+            }
             return jsvalue;
+        }
+        public void Dispose()
+        {
+            if (thisPtr.IsAllocated) {
+                thisPtr.Free();
+            }
         }
 
         virtual public JavaScriptNativeFunction Wrap()
@@ -87,7 +100,7 @@ namespace ChakraSharp.Port
                 if (that.wrapdg == null)
                     that.wrapdg = that.WrapFirst();
                 var obj = that.wrapdg(arguments);
-                var v = JSValue.Make(obj).rawvalue;
+                var v = JSValue.FromObject(obj).rawvalue;
                 if (isConstructCall)
                 {
                     var pt = callee.GetIndexedProperty(JavaScriptValue.FromString("prototype"));

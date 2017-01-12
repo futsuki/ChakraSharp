@@ -24,7 +24,7 @@ namespace ChakraSharp
         }
         */
 
-        static public JSValue Make(object value)
+        static public JSValue FromObject(object value)
         {
             var v = new JSValue();
             v.rawvalue = JavaScriptValue.Undefined;
@@ -278,7 +278,9 @@ namespace ChakraSharp
                     }
                     else
                     {
+                        var wrapped = Port.TypeWrapper.Wrap(o.GetType());
                         rawvalue = JavaScriptValue.CreateExternalObject(GCHandle.ToIntPtr(GCHandle.Alloc(o)), HandleFinalize);
+                        rawvalue.Prototype = wrapped.prototypeValue;
                     }
                     break;
 
@@ -292,23 +294,23 @@ namespace ChakraSharp
 
         public static implicit operator JSValue(bool v)
         {
-            return JSValue.Make(v);
+            return JSValue.FromObject(v);
         }
         public static implicit operator JSValue(int v)
         {
-            return JSValue.Make(v);
+            return JSValue.FromObject(v);
         }
         public static implicit operator JSValue(double v)
         {
-            return JSValue.Make(v);
+            return JSValue.FromObject(v);
         }
         public static implicit operator JSValue(string v)
         {
-            return JSValue.Make(v);
+            return JSValue.FromObject(v);
         }
         public static implicit operator JSValue(JavaScriptNativeFunction v)
         {
-            return JSValue.Make(v);
+            return JSValue.FromObject(v);
         }
         public static implicit operator JSValue(JavaScriptValue v)
         {
@@ -316,7 +318,7 @@ namespace ChakraSharp
         }
         public static implicit operator JSValue(Delegate v)
         {
-            return JSValue.Make(v);
+            return JSValue.FromObject(v);
         }
 
         public JSValue ConvertBoolean()

@@ -18,7 +18,7 @@ namespace ChakraSharp.Port
         {
 
             JavaScriptValue res;
-            var err = Native.JsCallFunction(val, o.Select(e => JSValue.Make(e).rawvalue).ToArray(), (ushort)o.Length, out res);
+            var err = Native.JsCallFunction(val, o.Select(e => JSValue.FromObject(e).rawvalue).ToArray(), (ushort)o.Length, out res);
             if (err == JavaScriptErrorCode.ScriptException)
             {
                 JavaScriptValue ex;
@@ -46,7 +46,7 @@ namespace ChakraSharp.Port
                 }
                 else if (outType == typeof(JSValue))
                 {
-                    return JSValue.Make(obj);
+                    return JSValue.FromObject(obj);
                 }
                 else
                 {
