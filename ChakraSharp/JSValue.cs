@@ -362,6 +362,12 @@ namespace ChakraSharp
             Native.ThrowIfError(Native.JsCallFunction(this.rawvalue, contextAndArguments.Select(e => e.rawvalue).ToArray(), (ushort)contextAndArguments.Length, out ret));
             return JSValue.Make(ret);
         }
+        public JSValue Call(params JavaScriptValue[] contextAndArguments)
+        {
+            JavaScriptValue ret;
+            Native.ThrowIfError(Native.JsCallFunction(this.rawvalue, contextAndArguments, (ushort)contextAndArguments.Length, out ret));
+            return JSValue.Make(ret);
+        }
         public JSValue New(JSValue[] contextAndArguments)
         {
             JavaScriptValue ret;
