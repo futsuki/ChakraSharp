@@ -359,14 +359,14 @@ return sb.ToString();
                 c.Global["TestClass1"] = Port.Util.WrapType(typeof(TestClass1));
                 c.Evaluate("var obj = new TestClass1()");
                 c.Evaluate("TestClass1.stNumber = 10;");
-                Assert.IsTrue((double)c.Evaluate("(function() { return TestClass1.stNumber; })()").GetObject() == 10);
+                Assert.IsTrue((double)c.Evaluate("TestClass1.stNumber").GetObject() == 10);
                 c.Evaluate("TestClass1.stNumprop = 20;");
-                Assert.IsTrue((double)c.Evaluate("(function() { return TestClass1.stNumprop; })()").GetObject() == 20);
+                Assert.IsTrue((double)c.Evaluate("TestClass1.stNumprop").GetObject() == 20);
 
                 c.Evaluate("obj.number = 30;");
-                Assert.IsTrue((double)c.Evaluate("(function() { return obj.number; })()").GetObject() == 30);
+                Assert.IsTrue((double)c.Evaluate("obj.number").GetObject() == 30);
                 c.Evaluate("obj.numprop = 40;");
-                Assert.IsTrue((double)c.Evaluate("(function() { return obj.numprop; })()").GetObject() == 40);
+                Assert.IsTrue((double)c.Evaluate("obj.numprop").GetObject() == 40);
 
                 var obj = (TestClass1)c.Evaluate("obj").GetObject();
                 Assert.IsTrue(TestClass1.stNumber == 10);
@@ -382,16 +382,58 @@ return sb.ToString();
             {
                 c.Global["obj"] = JSValue.FromObject(new TestClass1());
 
-                c.Evaluate("obj.number = 30;");
-                Assert.IsTrue((double)c.Evaluate("(function() { return obj.number; })()").GetObject() == 30);
-                c.Evaluate("obj.numprop = 40;");
-                Assert.IsTrue((double)c.Evaluate("(function() { return obj.numprop; })()").GetObject() == 40);
+                c.Evaluate("obj.number = 60;");
+                Assert.IsTrue((double)c.Evaluate("obj.number").GetObject() == 60);
+                c.Evaluate("obj.numprop = 70;");
+                Assert.IsTrue((double)c.Evaluate("obj.numprop").GetObject() == 70);
 
                 var obj = (TestClass1)c.Evaluate("obj").GetObject();
-                Assert.IsTrue(obj.number == 30);
-                Assert.IsTrue(obj.numprop == 40);
+                Assert.IsTrue(obj.number == 60);
+                Assert.IsTrue(obj.numprop == 70);
             }
         }
+        [TestMethod()]
+        public void ClassWrapTest3()
+        {
+            using (var c = MakeController())
+            {
+                c.Global["TestClass2"] = Port.Util.WrapType(typeof(TestClass2));
+                c.Evaluate("var obj = new TestClass2()");
+                c.Evaluate("TestClass2.stNumber = 100;");
+                Assert.IsTrue((double)c.Evaluate("TestClass2.stNumber").GetObject() == 100);
+                c.Evaluate("TestClass2.stNumprop = 200;");
+                Assert.IsTrue((double)c.Evaluate("TestClass2.stNumprop").GetObject() == 200);
+
+                c.Evaluate("obj.number = 300;");
+                Assert.IsTrue((double)c.Evaluate("obj.number").GetObject() == 300);
+                c.Evaluate("obj.numprop = 400;");
+                Assert.IsTrue((double)c.Evaluate("obj.numprop").GetObject() == 400);
+
+                var obj = (TestClass2)c.Evaluate("obj").GetObject();
+                Assert.IsTrue(TestClass2.stNumber == 100);
+                Assert.IsTrue(TestClass2.stNumprop == 200);
+                Assert.IsTrue(obj.number == 300);
+                Assert.IsTrue(obj.numprop == 400);
+            }
+        }
+        [TestMethod()]
+        public void ClassWrapTest4()
+        {
+            using (var c = MakeController())
+            {
+                c.Global["obj"] = JSValue.FromObject(new TestClass2());
+
+                c.Evaluate("obj.number = 600;");
+                Assert.IsTrue((double)c.Evaluate("obj.number").GetObject() == 600);
+                c.Evaluate("obj.numprop = 700;");
+                Assert.IsTrue((double)c.Evaluate("obj.numprop").GetObject() == 700);
+
+                var obj = (TestClass2)c.Evaluate("obj").GetObject();
+                Assert.IsTrue(obj.number == 600);
+                Assert.IsTrue(obj.numprop == 700);
+            }
+        }
+
 
         public class TestClass1
         {
@@ -402,6 +444,9 @@ return sb.ToString();
             public int number;
             public int numprop { get; set; }
             public int numprop2 { get; private set; }
+        }
+        public class TestClass2 : TestClass1
+        {
         }
 
         JavaScriptValue Log(JavaScriptValue callee,

@@ -77,6 +77,14 @@ namespace ChakraSharp.Port
                 type.GetProperties(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Instance));
 
             constructorValue.SetIndexedProperty(JavaScriptValue.FromString("prototype"), prototypeValue);
+
+            var basetype = type.BaseType;
+            if (basetype != null)
+            {
+                var jv = TypeWrapper.Wrap(basetype);
+                constructorValue.Prototype = jv.constructorValue;
+                prototypeValue.Prototype = jv.prototypeValue;
+            }
         }
 
         void AssignMethodProc(JavaScriptValue setTo, MethodInfo[] methods)
