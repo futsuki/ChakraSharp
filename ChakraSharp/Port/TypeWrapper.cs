@@ -37,6 +37,12 @@ namespace ChakraSharp.Port
         public JavaScriptValue prototypeValue;
         TypeWrapper(Type type)
         {
+            TypeWrapper baseTypeWrapper = null;
+            if (type.BaseType != null)
+            {
+                baseTypeWrapper = TypeWrapper.Wrap(type.BaseType);
+            }
+
             this.type = type;
             var ctors = type.GetConstructors();
             if (ctors.Length == 0)
@@ -78,12 +84,10 @@ namespace ChakraSharp.Port
 
             constructorValue.SetIndexedProperty(JavaScriptValue.FromString("prototype"), prototypeValue);
 
-            var basetype = type.BaseType;
-            if (basetype != null)
+            if (baseTypeWrapper != null)
             {
-                var jv = TypeWrapper.Wrap(basetype);
-                constructorValue.Prototype = jv.constructorValue;
-                prototypeValue.Prototype = jv.prototypeValue;
+                constructorValue.Prototype = baseTypeWrapper.constructorValue;
+                prototypeValue.Prototype = baseTypeWrapper.prototypeValue;
             }
         }
 
