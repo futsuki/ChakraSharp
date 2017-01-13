@@ -433,6 +433,28 @@ return sb.ToString();
                 Assert.IsTrue(obj.numprop == 700);
             }
         }
+        [TestMethod()]
+        public void ConverterTest1()
+        {
+            using (var c = MakeController())
+            {
+                var arr = c.Evaluate("([10, 20, 30])").ConvertTo<List<double>>();
+                Assert.IsTrue(arr[0] == 10);
+                Assert.IsTrue(arr[1] == 20);
+                Assert.IsTrue(arr[2] == 30);
+            }
+        }
+        [TestMethod()]
+        public void ConverterTest2()
+        {
+            using (var c = MakeController())
+            {
+                var arr = c.Evaluate("({a:10, b:20, c:30})").ConvertTo<Dictionary<string, double>>();
+                Assert.IsTrue(arr["a"] == 10);
+                Assert.IsTrue(arr["b"] == 20);
+                Assert.IsTrue(arr["c"] == 30);
+            }
+        }
 
 
         public class TestClass1

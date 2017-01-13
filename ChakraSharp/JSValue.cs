@@ -120,6 +120,49 @@ namespace ChakraSharp
                             throw new ChakraSharpException("non-function value is not convertible to delegate");
                         }
                     }
+                    else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
+                    {
+                        var len = rawvalue.GetIndexedProperty(JavaScriptValue.FromString("length"));
+                        if (len.ValueType == JavaScriptValueType.Number)
+                        {
+                            System.Collections.IList lst = (System.Collections.IList)Activator.CreateInstance(type);
+                            var leni = (int)Math.Floor(len.ToDouble());
+                            var elemtype = type.GetGenericArguments()[0];
+                            for (var i = 0; i < leni; i++)
+                            {
+                                var elem = rawvalue.GetIndexedProperty(JavaScriptValue.FromInt32(i));
+                                lst.Add(JSValue.Make(elem).ConvertTo(elemtype));
+                            }
+                            return lst;
+                        }
+                        else
+                        {
+                            return null;
+                        }
+                    }
+                    else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+                    {
+                        var keytype = type.GetGenericArguments()[0];
+                        if (keytype == typeof(string))
+                        {
+                            System.Collections.IDictionary dic = (System.Collections.IDictionary)Activator.CreateInstance(type);
+                            var elemtype = type.GetGenericArguments()[1];
+                            var arr = rawvalue.GetOwnPropertyNames();
+                            var len = (int)arr.GetIndexedProperty(JavaScriptValue.FromString("length")).ToDouble();
+                            for (var i = 0; i < len; i++)
+                            {
+                                var keyjs = arr.GetIndexedProperty(JavaScriptValue.FromInt32(i));
+                                var key = keyjs.ToString();
+                                var valjs = rawvalue.GetIndexedProperty(keyjs);
+                                dic.Add(key, JSValue.Make(valjs).ConvertTo(elemtype));
+                            }
+                            return dic;
+                        }
+                        else
+                        {
+                            return null;
+                        }
+                    }
                     else
                     {
                         if (rawvalue.HasExternalData)
