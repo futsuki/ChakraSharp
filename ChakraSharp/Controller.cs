@@ -67,14 +67,18 @@ namespace ChakraSharp
         }
         public JSValue Evaluate(string js)
         {
+            return Evaluate(js, "Evaluate");
+        }
+        public JSValue Evaluate(string js, string sourceName)
+        {
             JavaScriptValue result;
 
-            var err = Native.JsRunScript(js, currentSourceContext++, "Evaluate", out result);
+            var err = Native.JsRunScript(js, currentSourceContext++, sourceName, out result);
             if (err == JavaScriptErrorCode.ScriptException ||
                 err == JavaScriptErrorCode.ScriptCompile ||
                 err == JavaScriptErrorCode.InExceptionState)
             {
-                throw new ChakraSharpException(ErrorToString(err, "Evaluate"));
+                throw new ChakraSharpException(ErrorToString(err, sourceName));
             }
             else
             {
