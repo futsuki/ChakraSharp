@@ -12,17 +12,6 @@ namespace ChakraSharp
     public struct JSValue
     {
         public JavaScriptValue rawvalue;
-        /*
-        public JSValue(JavaScriptValue value)
-        {
-            this.rawvalue = value;
-        }
-        public JSValue(object value)
-        {
-            this.rawvalue = JavaScriptValue.Undefined;
-            SetValue(value);
-        }
-        */
 
         static public JSValue FromObject(object value)
         {

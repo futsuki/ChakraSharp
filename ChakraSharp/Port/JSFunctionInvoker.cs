@@ -32,11 +32,8 @@ namespace ChakraSharp.Port
 
             bool b;
             Native.ThrowIfError(Native.JsHasException(out b));
-            //Console.WriteLine("exce: " + b);
 
             var objval = JSValue.Make(res);
-            //Console.WriteLine(objval);
-            //Console.WriteLine(objval.rawvalue.ValueType);
             var obj = objval.GetObject();
             try
             {

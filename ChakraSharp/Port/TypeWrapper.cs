@@ -66,7 +66,6 @@ namespace ChakraSharp.Port
             prototypeValue = JavaScriptValue.CreateObject();
 
             // statics
-            //Console.WriteLine("register static");
             AssignMethodProc(constructorValue,
                 type.GetMethods(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Static));
             AssignFieldProc(constructorValue,
@@ -74,7 +73,6 @@ namespace ChakraSharp.Port
             AssignPropertyProc(constructorValue,
                 type.GetProperties(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Static));
             // instances
-            //Console.WriteLine("register instance");
             AssignMethodProc(prototypeValue,
                 type.GetMethods(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Instance));
             AssignFieldProc(prototypeValue,
@@ -110,9 +108,6 @@ namespace ChakraSharp.Port
                     var m = ms[0];
                     var smw = (m.IsStatic) ? (FunctionWrapper)new StaticMethodWrapper(m) : (FunctionWrapper)new InstanceMethodWrapper(m);
                     setTo.SetIndexedProperty(JavaScriptValue.FromString(m.Name), smw.GetJavaScriptValue());
-                    //var val = setTo.GetIndexedProperty(JavaScriptValue.FromString(m.Name));
-                    //Console.WriteLine("set " + type.Name + "." + methodName);
-                    //Console.WriteLine("seted " + val.ConvertToString().ToString());
                 }
                 else
                 {
@@ -122,10 +117,6 @@ namespace ChakraSharp.Port
                         os.AppendMethod(m);
                     }
                     setTo.SetIndexedProperty(JavaScriptValue.FromString(os.GetName()), os.GetJavaScriptValue());
-                    //var val = setTo.GetIndexedProperty(JavaScriptValue.FromString(os.GetName()));
-                    //Console.WriteLine("ol set " + type.Name + "." + methodName);
-                    //Console.WriteLine("seted " + val.ConvertToString().ToString());
-                    //Console.WriteLine("skip " + type.Name + "." + methodName);
                 }
             }
         }

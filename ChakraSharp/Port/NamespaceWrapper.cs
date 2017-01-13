@@ -14,7 +14,6 @@ namespace ChakraSharp.Port
         public NamespaceWrapper parent;
         public Dictionary<string, NamespaceWrapper> children;
         public bool isType;
-        //public bool isNamespace;
         public string path;
         public Type type;
         public string name;
@@ -32,7 +31,6 @@ namespace ChakraSharp.Port
             var node = new NamespaceWrapper();
             node.type = t;
             node.isType = true;
-            //node.isNamespace = false;
             node.path = p;
             var idx = p.LastIndexOf('.');
             node.name = idx == -1 ? p : p.Substring(idx + 1);
@@ -45,7 +43,6 @@ namespace ChakraSharp.Port
             var node = new NamespaceWrapper();
             node.type = null;
             node.isType = false;
-            //node.isNamespace = true;
             node.path = p;
             var idx = p.LastIndexOf('.');
             node.name = idx == -1 ? p : p.Substring(idx + 1);
@@ -143,12 +140,6 @@ namespace ChakraSharp.Port
                 var node = allNodes[k];
                 RegisterTypeNode(node);
             }
-            //Console.WriteLine(allNodes["System.Math"]);
-            //foreach (var m in allNodes["System"].children)
-            //foreach (var m in Root.children)
-            //{
-            //Console.WriteLine(m.Value.path);
-            //}
         }
 
 
@@ -167,7 +158,6 @@ namespace ChakraSharp.Port
                 return;
             var getpropid = JavaScriptPropertyId.FromString("get");
             var setpropid = JavaScriptPropertyId.FromString("set");
-            //Console.WriteLine(path);
             foreach (var kv in children)
             {
                 var n = kv.Value;
@@ -178,7 +168,6 @@ namespace ChakraSharp.Port
                 pp.node = n;
                 desc.SetProperty(getpropid, JavaScriptValue.CreateFunction(PropertyProxy.PropertyGetter, GCHandle.ToIntPtr(GCHandle.Alloc(pp))), true);
                 desc.SetProperty(setpropid, JavaScriptValue.CreateFunction(PropertyProxy.PropertySetter, GCHandle.ToIntPtr(GCHandle.Alloc(pp))), true);
-                //Console.WriteLine(n.path);
                 obj.DefineProperty(prop, desc);
             }
         }
@@ -249,7 +238,6 @@ namespace ChakraSharp.Port
                         obj.SetIndexedProperty(that.EntitySymbol, entity);
 
                     }
-                    //Console.WriteLine("prop get: "+node.name+":"+entity.ValueType + ":" + entity.ConvertToString().ToString());
                     return entity;
                 }
                 catch (Exception e)

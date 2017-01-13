@@ -14,7 +14,6 @@ namespace ChakraSharp.Port
     {
         public struct OverloadEntry
         {
-            //public MethodBase methodInfo;
             public ParameterData[] ps;
             public struct ParameterData
             {
@@ -81,7 +80,6 @@ namespace ChakraSharp.Port
                 // arguments[0] is 'this'
                 if (arguments.Length < ps.Length)
                     return DENIED;
-                //else if (arguments.Length > pis.Length && !IsParams(pis[pis.Length-1]))
                 else if (arguments.Length > ps.Length)
                     return DENIED;
                 int score = 0;
@@ -176,9 +174,6 @@ namespace ChakraSharp.Port
                         return DENIED;
 
                     case JavaScriptValueType.Undefined:
-                        //if (!pit.IsValueType)
-                        //return ALLOWED;
-                        //else
                         return DENIED;
 
                     case JavaScriptValueType.Array:
@@ -239,13 +234,11 @@ namespace ChakraSharp.Port
                     var score = mi.GetArgumentsScore(arguments);
                     if (lowestScore > score)
                     {
-                        //Console.WriteLine("Overload entry: " + string.Join(", ", mi.ps.Skip(1).Select(e => e.parameterType.ToString()).ToArray()));
                         lowestScore = score;
                         lastIdx = i;
                     }
                     else if (lowestScore == score)
                     {
-                        //Console.WriteLine("Clear entry: " + string.Join(", ", mi.ps.Skip(1).Select(e => e.parameterType.ToString()).ToArray()));
                         lastIdx = -1; // deny ambiguous overload
                     }
                 }
@@ -255,7 +248,6 @@ namespace ChakraSharp.Port
                     return JavaScriptValue.Invalid;
                 }
                 var method = that.methodInfos[lastIdx];
-                //Console.WriteLine("Overload selected: " + string.Join(", ", method.ps.Skip(1).Select(e => e.parameterType.ToString()).ToArray()));
                 if (method.cachedFunction == null)
                     method.cachedFunction = method.entityWrapper.Wrap();
                 if (method.cachedData == IntPtr.Zero)
@@ -278,7 +270,6 @@ namespace ChakraSharp.Port
         public override string GetName()
         {
             return firstName;
-            //return string.Join("|", names.ToArray());
         }
     }
 }

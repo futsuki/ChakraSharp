@@ -21,14 +21,11 @@ namespace ChakraSharp.Port
         public static object Conv(JavaScriptValue val, Type t)
         {
             object obj = null;
-            //var obj = v.GetObject();
             if (t.IsEnum && val.ValueType == JavaScriptValueType.String)
-            //if (t.IsEnum && obj is string)
             {
                 try
                 {
                     // 3.5にはEnum.TryParseがない
-                    //obj = Enum.Parse(t, (string)obj);
                     obj = Enum.Parse(t, val.ToString());
                 }
                 catch
@@ -39,12 +36,7 @@ namespace ChakraSharp.Port
             else
             {
                 var v = JSValue.Make(val);
-                //try
-                //{
-                    obj = v.ConvertTo(t);
-                    //obj = Convert.ChangeType(obj, t);
-                //}
-                //catch {}
+                obj = v.ConvertTo(t);
             }
             return obj;
         }
@@ -85,12 +77,9 @@ namespace ChakraSharp.Port
             try
             {
                 var that = (FunctionWrapper)GCHandle.FromIntPtr(callbackData).Target;
-                //Console.WriteLine("called "+GetName());
                 if (that.constructOnly && !isConstructCall)
                 {
                     return JavaScriptValue.Undefined;
-                    //Native.JsSetException(JavaScriptValue.CreateError(JavaScriptValue.FromString(string.Format("Construct only function: {0}", GetName()))));
-                    //return JavaScriptValue.Invalid;
                 }
                 if (arguments.Length - 1 != that.neededArgumentsCount)
                 {
