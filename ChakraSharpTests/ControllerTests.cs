@@ -434,6 +434,36 @@ return sb.ToString();
             }
         }
         [TestMethod()]
+        public void ClassWrapTest5()
+        {
+            using (var c = MakeController())
+            {
+                c.Global["obj"] = JSValue.FromObject(new TestClass2());
+
+                c.Evaluate("obj.dg1 = function(v) { return +v + 10 };");
+                
+                var obj = (TestClass2)c.Evaluate("obj").GetObject();
+                Assert.IsTrue(obj.dg1(10) == 20);
+            }
+        }
+
+        public class TestClass1
+        {
+            public static int stNumber;
+            public static int stNumprop { get; set; }
+            public static int stNumprop2 { get; private set; }
+
+            public int number;
+            public int numprop { get; set; }
+            public int numprop2 { get; private set; }
+
+            public Func<int, int> dg1;
+        }
+        public class TestClass2 : TestClass1
+        {
+        }
+
+        [TestMethod()]
         public void ConverterTest1()
         {
             using (var c = MakeController())
@@ -454,21 +484,6 @@ return sb.ToString();
                 Assert.IsTrue(arr["b"] == 20);
                 Assert.IsTrue(arr["c"] == 30);
             }
-        }
-
-
-        public class TestClass1
-        {
-            public static int stNumber;
-            public static int stNumprop { get; set; }
-            public static int stNumprop2 { get; private set; }
-
-            public int number;
-            public int numprop { get; set; }
-            public int numprop2 { get; private set; }
-        }
-        public class TestClass2 : TestClass1
-        {
         }
 
         JavaScriptValue Log(JavaScriptValue callee,

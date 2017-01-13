@@ -20,14 +20,16 @@ namespace ChakraSharp.Port
 
         public static object Conv(JavaScriptValue val, Type t)
         {
-            var v = JSValue.Make(val);
-            var obj = v.GetObject();
-            if (t.IsEnum && obj is string)
+            object obj = null;
+            //var obj = v.GetObject();
+            if (t.IsEnum && val.ValueType == JavaScriptValueType.String)
+            //if (t.IsEnum && obj is string)
             {
                 try
                 {
                     // 3.5にはEnum.TryParseがない
-                    obj = Enum.Parse(t, (string)obj);
+                    //obj = Enum.Parse(t, (string)obj);
+                    obj = Enum.Parse(t, val.ToString());
                 }
                 catch
                 {
@@ -36,11 +38,13 @@ namespace ChakraSharp.Port
             }
             else
             {
-                try
-                {
-                    obj = Convert.ChangeType(obj, t);
-                }
-                catch { }
+                var v = JSValue.Make(val);
+                //try
+                //{
+                    obj = v.ConvertTo(t);
+                    //obj = Convert.ChangeType(obj, t);
+                //}
+                //catch {}
             }
             return obj;
         }

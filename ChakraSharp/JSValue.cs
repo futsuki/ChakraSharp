@@ -165,7 +165,15 @@ namespace ChakraSharp
                     }
                     else
                     {
-                        if (rawvalue.HasExternalData)
+                        IntPtr data;
+                        bool haveEx = false;
+                        var err = Native.JsGetExternalData(rawvalue, out data);
+                        haveEx = err != JavaScriptErrorCode.InvalidArgument;
+                        if (err != JavaScriptErrorCode.InvalidArgument)
+                        {
+                            Native.ThrowIfError(err);
+                        }
+                        if (haveEx)
                         {
                             var h = (GCHandle)rawvalue.ExternalData;
                             return h.Target;
