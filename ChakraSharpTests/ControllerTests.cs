@@ -464,6 +464,61 @@ return sb.ToString();
         }
 
         [TestMethod()]
+        public void StructWrapTest1()
+        {
+            using (var c = MakeController())
+            {
+                c.Global["TestStruct1"] = Port.Util.WrapType(typeof(TestStruct1));
+                c.Evaluate("var obj = new TestStruct1()");
+                c.Evaluate("TestStruct1.stNumber = 100;");
+                Assert.IsTrue((double)c.Evaluate("TestStruct1.stNumber").GetObject() == 100);
+                c.Evaluate("TestStruct1.stNumprop = 200;");
+                Assert.IsTrue((double)c.Evaluate("TestStruct1.stNumprop").GetObject() == 200);
+
+                c.Evaluate("obj.number = 300;");
+                Assert.IsTrue((double)c.Evaluate("obj.number").GetObject() == 300);
+                c.Evaluate("obj.numprop = 400;");
+                Assert.IsTrue((double)c.Evaluate("obj.numprop").GetObject() == 400);
+
+                var obj = (TestStruct1)c.Evaluate("obj").GetObject();
+                Assert.IsTrue(TestStruct1.stNumber == 100);
+                Assert.IsTrue(TestStruct1.stNumprop == 200);
+                Assert.IsTrue(obj.number == 300);
+                Assert.IsTrue(obj.numprop == 400);
+            }
+        }
+        [TestMethod()]
+        public void StructWrapTest2()
+        {
+            using (var c = MakeController())
+            {
+                c.Global["obj"] = JSValue.FromObject(new TestStruct1());
+
+                c.Evaluate("obj.number = 600;");
+                Assert.IsTrue((double)c.Evaluate("obj.number").GetObject() == 600);
+                c.Evaluate("obj.numprop = 700;");
+                Assert.IsTrue((double)c.Evaluate("obj.numprop").GetObject() == 700);
+
+                var obj = (TestStruct1)c.Evaluate("obj").GetObject();
+                Assert.IsTrue(obj.number == 600);
+                Assert.IsTrue(obj.numprop == 700);
+            }
+        }
+
+        public struct TestStruct1
+        {
+            public static int stNumber;
+            public static int stNumprop { get; set; }
+            public static int stNumprop2 { get; private set; }
+
+            public int number;
+            public int numprop { get; set; }
+            public int numprop2 { get; private set; }
+
+            public Func<int, int> dg1;
+        }
+
+        [TestMethod()]
         public void ConverterTest1()
         {
             using (var c = MakeController())

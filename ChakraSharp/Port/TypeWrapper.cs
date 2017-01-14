@@ -47,7 +47,7 @@ namespace ChakraSharp.Port
             var ctors = type.GetConstructors();
             if (ctors.Length == 0)
             {
-                constructorValue = JavaScriptValue.CreateFunction(NoConstructor);
+                constructorValue = JavaScriptValue.CreateFunction(NoConstructor, GCHandle.ToIntPtr(GCHandle.Alloc(this)));
             }
             else if (ctors.Length == 1)
             {
@@ -348,8 +348,15 @@ namespace ChakraSharp.Port
             try
             {
                 var that = (TypeWrapper)GCHandle.FromIntPtr(callbackData).Target;
-                Native.JsSetException(JavaScriptValue.CreateError(JavaScriptValue.FromString(that.type.Name + " has no constructor")));
-                return JavaScriptValue.Invalid;
+                if (that.type.IsValueType)
+                {
+                    return JSValue.FromObject(Activator.CreateInstance(that.type)).rawvalue;
+                }
+                else
+                {
+                    Native.JsSetException(JavaScriptValue.CreateError(JavaScriptValue.FromString(that.type.Name + " has no constructor")));
+                    return JavaScriptValue.Invalid;
+                }
             }
             catch (Exception e)
             {
