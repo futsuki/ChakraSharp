@@ -30,15 +30,22 @@ namespace ChakraSharp
         {
             Evaluate(js);
         }
-        static string ErrorToString(JavaScriptErrorCode err, string location)
+        static void ThrowError(JavaScriptErrorCode err, string location)
         {
             var sb = new System.Text.StringBuilder();
             JavaScriptValue ex;
             bool hasEx;
             Native.ThrowIfError(Native.JsHasException(out hasEx));
+            object obj=null;
             if (hasEx)
             {
                 Native.ThrowIfError(Native.JsGetAndClearException(out ex));
+                IntPtr p = IntPtr.Zero;
+                Native.JsGetExternalData(ex, out p);
+                if (p != IntPtr.Zero)
+                {
+                    obj = GCHandle.FromIntPtr(p).Target;
+                }
                 if (err == JavaScriptErrorCode.ScriptCompile)
                 {
                     var message = ex.GetIndexedProperty(JavaScriptValue.FromString("message")).ConvertToString().ToString();
@@ -56,14 +63,23 @@ namespace ChakraSharp
                 */
                 else
                 {
-                    sb.Append(ex.ConvertToString().ToString());
+                    var errorobj = ex.GetIndexedProperty(JavaScriptValue.FromString("message"));
+                    p = IntPtr.Zero;
+                    Native.JsGetExternalData(errorobj, out p);
+                    if (p != IntPtr.Zero)
+                    {
+                        obj = GCHandle.FromIntPtr(p).Target;
+                    }
+                    sb.Append(System.Convert.ToString(obj));
+                    //sb.Append(ex.ConvertToString().ToString());
                 }
             }
             else
             {
                 sb.Append(err);
             }
-            return sb.ToString();
+            throw new ChakraSharpException(sb.ToString(), obj as Exception);
+            //return sb.ToString();
         }
         public JSValue Evaluate(string js)
         {
@@ -78,7 +94,8 @@ namespace ChakraSharp
                 err == JavaScriptErrorCode.ScriptCompile ||
                 err == JavaScriptErrorCode.InExceptionState)
             {
-                throw new ChakraSharpException(ErrorToString(err, sourceName));
+                ThrowError(err, sourceName);
+                //throw new ChakraSharpException(ErrorToString(err, sourceName));
             }
             else
             {

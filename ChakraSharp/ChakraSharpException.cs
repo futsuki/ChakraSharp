@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Runtime.InteropServices;
+using ChakraHost.Hosting;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace ChakraSharp
 {
@@ -19,6 +23,20 @@ namespace ChakraSharp
         public ChakraSharpException(string message, Exception inner)
         : base(message, inner)
         {
+        }
+    }
+
+    public class ExceptionUtil
+    {
+        static public JavaScriptValue SetJSException(Exception e)
+        {
+            var v = JavaScriptValue.CreateExternalObject(GCHandle.ToIntPtr(GCHandle.Alloc(e)), Free);
+            Native.JsSetException(JavaScriptValue.CreateError(v));
+            return JavaScriptValue.Invalid;
+        }
+        static void Free(IntPtr p)
+        {
+            GCHandle.FromIntPtr(p).Free();
         }
     }
 }

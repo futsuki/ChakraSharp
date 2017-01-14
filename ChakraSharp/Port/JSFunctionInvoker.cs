@@ -14,6 +14,10 @@ namespace ChakraSharp.Port
     {
         public JavaScriptValue val;
         public Type outType;
+        void actionBody(object[] o)
+        {
+            body(o);
+        }
         object body(object[] o)
         {
 
@@ -75,7 +79,9 @@ namespace ChakraSharp.Port
             var fw = new JSFunctionInvoker();
             fw.val = rawvalue;
             fw.outType = mi.ReturnType;
+            //var body = (Func<object[], object>)fw.body;
             var body = (Func<object[], object>)fw.body;
+            var actionBody = (Action<object[]>)fw.actionBody;
             Expression[] parr = new Expression[ps.Length + 1];
             parr[0] = Expression.ConvertChecked(Expression.Constant(global), typeof(object));
             for (int i = 0; i < ps.Length; i++)
@@ -84,10 +90,19 @@ namespace ChakraSharp.Port
             }
             var array = Expression.NewArrayInit(typeof(object), parr);
             var ffv = Expression.Constant(fw);
-            var c1 = Expression.Call(ffv, body.Method, new Expression[] { array });
-            var rt = Expression.Constant(mi.ReturnType);
-            var c3 = Expression.ConvertChecked(c1, mi.ReturnType);
-            var f2 = Expression.Lambda(type, c3, psnames);
+            Expression call;
+            if (mi.ReturnType == typeof(void))
+            {
+                var c1 = Expression.Call(ffv, actionBody.Method, new Expression[] { array });
+                call = c1;
+            }
+            else
+            {
+                var c1 = Expression.Call(ffv, body.Method, new Expression[] { array });
+                var c3 = Expression.ConvertChecked(c1, mi.ReturnType);
+                call = c3;
+            }
+            var f2 = Expression.Lambda(type, call, psnames);
             var dg2 = f2.Compile();
             return dg2;
         }
