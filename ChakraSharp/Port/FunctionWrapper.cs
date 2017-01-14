@@ -269,8 +269,6 @@ namespace ChakraSharp.Port
                 Func<JavaScriptValue[], object> ret = (values) =>
                 {
                     var t = Conv(values[0], mi.DeclaringType);
-                    Console.WriteLine("target: "+t);
-                    Console.WriteLine("target: "+ values[0].ValueType);
                     mi.Invoke(t, values.Skip(1).Select((e, i) => Conv(e, ps[i].ParameterType)).ToArray());
                     return null;
                 };

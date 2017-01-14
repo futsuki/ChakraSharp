@@ -90,6 +90,23 @@ namespace ChakraSharp.Tests
                 Assert.IsTrue(ApproxEquals((double)c.Evaluate("val").GetObject(), 15));
             }
         }
+        [TestMethod()]
+        public void DelegateTest4()
+        {
+            using (var c = MakeController())
+            {
+                c.Global["DGList3"] = Port.Util.WrapType(typeof(DGList3));
+                c.Evaluate("var dgl = new DGList3();");
+                c.Evaluate("var val = 40;");
+                c.Evaluate("dgl.lst.Add(function() { val += 1; });");
+                c.Evaluate("dgl.lst.Add(function() { val += 2; });");
+                c.Evaluate("dgl.lst.Add(function() { val += 3; });");
+                c.Evaluate("dgl.Invoke();");
+                c.Evaluate("dgl.Invoke();");
+                Assert.IsTrue(ApproxEquals((double)c.Evaluate("val").GetObject(), 52));
+            }
+        }
+
         class DGTestClass1
         {
             public delegate void dgt();
@@ -108,6 +125,9 @@ namespace ChakraSharp.Tests
             public delegate void DG();
             public List<DG> lst = new List<DG>();
             public void Invoke() { lst.ForEach(e => e.Invoke()); }
+        }
+        public class DGList3 : DGList1
+        {
         }
         public class DGList2
         {
