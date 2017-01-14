@@ -43,6 +43,88 @@ namespace ChakraSharp.Tests
             }
         }
 
+        [TestMethod()]
+        public void DelegateTest1()
+        {
+            using (var c = MakeController())
+            {
+                c.Global["DGList1"] = Port.Util.WrapType(typeof(DGList1));
+                c.Evaluate("var dgl = new DGList1();");
+                c.Evaluate("var val = 10;");
+                c.Evaluate("dgl.lst.Add(function() { val += 1; });");
+                c.Evaluate("dgl.lst.Add(function() { val += 2; });");
+                c.Evaluate("dgl.lst.Add(function() { val += 3; });");
+                c.Evaluate("dgl.Invoke();");
+                c.Evaluate("dgl.Invoke();");
+                Assert.IsTrue(ApproxEquals((double)c.Evaluate("val").GetObject(), 22));
+            }
+        }
+        [TestMethod()]
+        public void DelegateTest2()
+        {
+            using (var c = MakeController())
+            {
+                c.Global["DGList2"] = Port.Util.WrapType(typeof(DGList2));
+                c.Evaluate("var dgl = new DGList2();");
+                c.Evaluate("var val = 10;");
+                c.Evaluate("dgl.Add(function() { val += 1; });");
+                c.Evaluate("dgl.Add(function() { val += 2; });");
+                c.Evaluate("dgl.Add(function() { val += 3; });");
+                c.Evaluate("dgl.Invoke();");
+                c.Evaluate("dgl.Invoke();");
+                Assert.IsTrue(ApproxEquals((double)c.Evaluate("val").GetObject(), 22));
+            }
+        }
+        [TestMethod()]
+        public void DelegateTest3()
+        {
+            using (var c = MakeController())
+            {
+                c.Global["DGTestClass1"] = Port.Util.WrapType(typeof(DGTestClass1));
+                c.Evaluate("var val = 10;");
+                c.Evaluate("var dg = function() { val += 1; };");
+                c.Evaluate("DGTestClass1.dg = function() { val += 2; };");
+                c.Evaluate("DGTestClass1.dg();");
+                c.Evaluate("dg();");
+                DGTestClass1.dg();
+                Assert.IsTrue(ApproxEquals((double)c.Evaluate("val").GetObject(), 15));
+            }
+        }
+        class DGTestClass1
+        {
+            public delegate void dgt();
+            static public dgt dg;
+        }
+        public void fa(object a, object b)
+        {
+            fb(a, b);
+        }
+        public object fb(object a, object b)
+        {
+            return null;
+        }
+        public class DGList1
+        {
+            public delegate void DG();
+            public List<DG> lst = new List<DG>();
+            public void Invoke() { lst.ForEach(e => e.Invoke()); }
+        }
+        public class DGList2
+        {
+            public delegate void DG();
+            public System.Collections.ArrayList lst = new System.Collections.ArrayList();
+            public void Add(DG dg)
+            {
+                lst.Add(dg);
+            }
+            public void Invoke() {
+                foreach (DG e in lst)
+                {
+                    e.Invoke();
+                }
+            }
+        }
+
         static bool ApproxEquals(double a, double b, double delta=0.001)
         {
             return Math.Abs(a - b) < delta;

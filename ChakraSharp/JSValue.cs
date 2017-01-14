@@ -94,11 +94,21 @@ namespace ChakraSharp
                     {
                         return this;
                     }
-                    else if (type == typeof(JavaScriptValue))
+                    if (type == typeof(JavaScriptValue))
                     {
                         return rawvalue;
                     }
-                    else if (typeof(Delegate).IsAssignableFrom(type))
+                    IntPtr ptr = IntPtr.Zero;
+                    Native.JsGetExternalData(rawvalue, out ptr);
+                    if (ptr != IntPtr.Zero)
+                    {
+                        var o = GCHandle.FromIntPtr(ptr).Target;
+                        if (type.IsAssignableFrom(o.GetType()))
+                        {
+                            return o;
+                        }
+                    }
+                    if (typeof(Delegate).IsAssignableFrom(type))
                     {
                         if (rawvalue.ValueType == JavaScriptValueType.Function)
                         {
@@ -109,7 +119,7 @@ namespace ChakraSharp
                             throw new ChakraSharpException("non-function value is not convertible to delegate");
                         }
                     }
-                    else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
+                    if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
                     {
                         var len = rawvalue.GetIndexedProperty(JavaScriptValue.FromString("length"));
                         if (len.ValueType == JavaScriptValueType.Number)
@@ -129,7 +139,7 @@ namespace ChakraSharp
                             return null;
                         }
                     }
-                    else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+                    if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>))
                     {
                         var keytype = type.GetGenericArguments()[0];
                         if (keytype == typeof(string))
@@ -152,26 +162,25 @@ namespace ChakraSharp
                             return null;
                         }
                     }
+                    //else
+                    IntPtr data;
+                    bool haveEx = false;
+                    var err = Native.JsGetExternalData(rawvalue, out data);
+                    haveEx = err != JavaScriptErrorCode.InvalidArgument;
+                    if (err != JavaScriptErrorCode.InvalidArgument)
+                    {
+                        Native.ThrowIfError(err);
+                    }
+                    if (haveEx)
+                    {
+                        var h = (GCHandle)rawvalue.ExternalData;
+                        return h.Target;
+                    }
                     else
                     {
-                        IntPtr data;
-                        bool haveEx = false;
-                        var err = Native.JsGetExternalData(rawvalue, out data);
-                        haveEx = err != JavaScriptErrorCode.InvalidArgument;
-                        if (err != JavaScriptErrorCode.InvalidArgument)
-                        {
-                            Native.ThrowIfError(err);
-                        }
-                        if (haveEx)
-                        {
-                            var h = (GCHandle)rawvalue.ExternalData;
-                            return h.Target;
-                        }
-                        else
-                        {
-                            return this;
-                        }
+                        return this;
                     }
+
                 default:
                     return this;
             }

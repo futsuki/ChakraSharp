@@ -105,8 +105,7 @@ namespace ChakraSharp.Port
             }
             catch (Exception e)
             {
-                Native.JsSetException(JavaScriptValue.CreateError(JavaScriptValue.FromString(e.ToString())));
-                return JavaScriptValue.Invalid;
+                return ExceptionUtil.SetJSException(e);
             }
         }
 
@@ -200,8 +199,7 @@ namespace ChakraSharp.Port
                 }
                 catch (Exception e)
                 {
-                    Native.JsSetException(JavaScriptValue.CreateError(JavaScriptValue.FromString(e.ToString())));
-                    return JavaScriptValue.Invalid;
+                    return ExceptionUtil.SetJSException(e);
                 }
             }
 
@@ -235,8 +233,7 @@ namespace ChakraSharp.Port
                 }
                 catch (Exception e)
                 {
-                    Native.JsSetException(JavaScriptValue.CreateError(JavaScriptValue.FromString(e.ToString())));
-                    return JavaScriptValue.Invalid;
+                    return ExceptionUtil.SetJSException(e);
                 }
             }
         }
@@ -297,8 +294,7 @@ namespace ChakraSharp.Port
                 }
                 catch (Exception e)
                 {
-                    Native.JsSetException(JavaScriptValue.CreateError(JavaScriptValue.FromString(e.ToString())));
-                    return JavaScriptValue.Invalid;
+                    return ExceptionUtil.SetJSException(e);
                 }
             }
 
@@ -333,8 +329,7 @@ namespace ChakraSharp.Port
                 }
                 catch (Exception e)
                 {
-                    Native.JsSetException(JavaScriptValue.CreateError(JavaScriptValue.FromString(e.ToString())));
-                    return JavaScriptValue.Invalid;
+                    return ExceptionUtil.SetJSException(e);
                 }
             }
         }
@@ -360,8 +355,7 @@ namespace ChakraSharp.Port
             }
             catch (Exception e)
             {
-                Native.JsSetException(JavaScriptValue.CreateError(JavaScriptValue.FromString(e.ToString())));
-                return JavaScriptValue.Invalid;
+                return ExceptionUtil.SetJSException(e);
             }
         }
     }
