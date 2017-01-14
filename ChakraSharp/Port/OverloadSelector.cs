@@ -244,7 +244,7 @@ namespace ChakraSharp.Port
                 }
                 if (lastIdx == -1)
                 {
-                    Native.JsSetException(JavaScriptValue.CreateError(JavaScriptValue.FromString("ambiguous overload")));
+                    Native.JsSetException(JavaScriptValue.CreateError(JavaScriptValue.FromString("ambiguous overload "+that.GetName())));
                     return JavaScriptValue.Invalid;
                 }
                 var method = that.methodInfos[lastIdx];

@@ -117,6 +117,10 @@ namespace ChakraSharp.Port
             {
                 if (m.IsSpecialName)
                     continue;
+                if (m.IsGenericMethodDefinition)
+                    continue;
+                if (m.IsGenericMethod)
+                    continue;
                 if (!methodDic.ContainsKey(m.Name))
                     methodDic[m.Name] = new List<MethodInfo>();
                 methodDic[m.Name].Add(m);
