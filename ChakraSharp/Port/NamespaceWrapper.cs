@@ -182,11 +182,14 @@ namespace ChakraSharp.Port
                 else
                 {
                     value = JavaScriptValue.CreateObject();
+                    value.SetIndexedProperty(JavaScriptValue.FromString("toString"),
+                        JavaScriptValue.CreateFunction(InternalUtil.GetSavedString, GCHandle.ToIntPtr(GCHandle.Alloc(path))));
                 }
                 AssignToObject(value);
             }
             return value;
         }
+        
 
 
         class PropertyProxy
@@ -219,24 +222,7 @@ namespace ChakraSharp.Port
                     var entity = obj.GetIndexedProperty(that.EntitySymbol);
                     if (entity.ValueType == JavaScriptValueType.Undefined)
                     {
-                        if (that.node.isType)
-                        {
-                            entity = Util.WrapType(that.node.type);
-                        }
-                        else
-                        {
-                            entity = JavaScriptValue.CreateObject();
-                        }
-                        if (that.node.children != null)
-                        {
-                            foreach (var kv in that.node.children)
-                            {
-                                var c = kv.Value;
-                                entity.SetIndexedProperty(JavaScriptValue.FromString(c.name), c.GetJavaScriptValue());
-                            }
-                        }
-                        obj.SetIndexedProperty(that.EntitySymbol, entity);
-
+                        entity = that.node.GetJavaScriptValue();
                     }
                     return entity;
                 }

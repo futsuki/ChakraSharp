@@ -64,10 +64,13 @@ namespace ChakraSharp.Port
                 constructorValue = os.GetJavaScriptValue();
             }
             prototypeValue = JavaScriptValue.CreateObject();
+            //constructorValue.ExternalData = GCHandle.ToIntPtr(GCHandle.Alloc(type));
+            constructorValue.SetIndexedProperty(JavaScriptValue.FromString("_clrtypevalue"),
+                JavaScriptValue.CreateExternalObject(GCHandle.ToIntPtr(GCHandle.Alloc(type)), Free));
 
             // statics
             constructorValue.SetIndexedProperty(JavaScriptValue.FromString("toString"),
-                JavaScriptValue.CreateFunction(GetSavedString, GCHandle.ToIntPtr(GCHandle.Alloc(type.FullName))));
+                JavaScriptValue.CreateFunction(InternalUtil.GetSavedString, GCHandle.ToIntPtr(GCHandle.Alloc(type.FullName))));
             AssignMethodProc(constructorValue,
                 type.GetMethods(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Static));
             AssignFieldProc(constructorValue,
@@ -76,7 +79,7 @@ namespace ChakraSharp.Port
                 type.GetProperties(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Static));
             // instances
             prototypeValue.SetIndexedProperty(JavaScriptValue.FromString("toString"),
-                JavaScriptValue.CreateFunction(GetSavedString, GCHandle.ToIntPtr(GCHandle.Alloc(type.FullName + " Instance"))));
+                JavaScriptValue.CreateFunction(InternalUtil.GetSavedString, GCHandle.ToIntPtr(GCHandle.Alloc(type.FullName + " Instance"))));
             AssignMethodProc(prototypeValue,
                 type.GetMethods(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Instance));
             AssignFieldProc(prototypeValue,
@@ -92,22 +95,11 @@ namespace ChakraSharp.Port
                 prototypeValue.Prototype = baseTypeWrapper.prototypeValue;
             }
         }
-
-        static JavaScriptValue GetSavedString(JavaScriptValue callee,
-            [MarshalAs(UnmanagedType.U1)] bool isConstructCall,
-            [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] JavaScriptValue[] arguments,
-            ushort argumentCount,
-            IntPtr callbackData)
+        static void Free(IntPtr p)
         {
-            try
-            {
-                return JavaScriptValue.FromString((string)GCHandle.FromIntPtr(callbackData).Target);
-            }
-            catch (Exception e)
-            {
-                return ExceptionUtil.SetJSException(e);
-            }
+            GCHandle.FromIntPtr(p).Free();
         }
+
 
         void AssignMethodProc(JavaScriptValue setTo, MethodInfo[] methods)
         {

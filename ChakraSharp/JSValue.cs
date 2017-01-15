@@ -108,6 +108,24 @@ namespace ChakraSharp
                             return o;
                         }
                     }
+                    if (type == typeof(Type))
+                    {
+                        var tv = rawvalue.GetIndexedProperty(JavaScriptValue.FromString("_clrtypevalue"));
+                        if (tv.ValueType != JavaScriptValueType.Undefined)
+                        {
+                            IntPtr p;
+                            Native.JsGetExternalData(tv, out p);
+                            if (p != IntPtr.Zero)
+                            {
+                                var h = GCHandle.FromIntPtr(tv.ExternalData).Target;
+                                var t = h as Type;
+                                if (t != null)
+                                {
+                                    return t;
+                                }
+                            }
+                        }
+                    }
                     if (typeof(Delegate).IsAssignableFrom(type))
                     {
                         if (rawvalue.ValueType == JavaScriptValueType.Function)
@@ -201,37 +219,42 @@ namespace ChakraSharp
                     return this;
                 case JavaScriptValueType.Error:
                     return this;
-                case JavaScriptValueType.Function:
-                    return this;
                 case JavaScriptValueType.Null:
                     return null;
                 case JavaScriptValueType.Number:
                     return rawvalue.ToDouble();
+                case JavaScriptValueType.Function:
                 case JavaScriptValueType.Object:
-                    //if (rawvalue.HasExternalData)
-                    //{
-                        IntPtr data;
-                        bool haveEx = false;
-                        var err = Native.JsGetExternalData(rawvalue, out data);
-                        haveEx = err != JavaScriptErrorCode.InvalidArgument;
-                        if (err != JavaScriptErrorCode.InvalidArgument)
+                    IntPtr data;
+                    bool haveEx = false;
+                    var err = Native.JsGetExternalData(rawvalue, out data);
+                    haveEx = data != IntPtr.Zero;
+                    if (err != JavaScriptErrorCode.InvalidArgument)
+                    {
+                        Native.ThrowIfError(err);
+                    }
+                    if (haveEx)
+                    {
+                        var h = GCHandle.FromIntPtr(data);
+                        return h.Target;
+                    }
+
+                    var tv = rawvalue.GetIndexedProperty(JavaScriptValue.FromString("_clrtypevalue"));
+                    if (tv.ValueType != JavaScriptValueType.Undefined)
+                    {
+                        IntPtr p;
+                        Native.JsGetExternalData(tv, out p);
+                        if (p != IntPtr.Zero)
                         {
-                            Native.ThrowIfError(err);
+                            var h = GCHandle.FromIntPtr(tv.ExternalData).Target;
+                            var t = h as Type;
+                            if (t != null)
+                            {
+                                return t;
+                            }
                         }
-                        if (haveEx)
-                        {
-                            var h = GCHandle.FromIntPtr(data);
-                            return h.Target;
-                        }
-                        else
-                        {
-                            return this;
-                        }
-                    //}
-                    //else
-                    //{
-                        //return this;
-                    //}
+                    }
+                    return this;
                 case JavaScriptValueType.String:
                     return rawvalue.ToString();
                 case JavaScriptValueType.Symbol:
@@ -324,6 +347,11 @@ namespace ChakraSharp
                     else if (o is JSValue)
                     {
                         rawvalue = ((JSValue)o).rawvalue;
+                    }
+                    else if (o is Type)
+                    {
+                        var wrapped = Port.TypeWrapper.Wrap((Type)o);
+                        rawvalue = wrapped.constructorValue;
                     }
                     else
                     {

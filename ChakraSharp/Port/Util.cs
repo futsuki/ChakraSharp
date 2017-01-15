@@ -58,4 +58,22 @@ namespace ChakraSharp.Port
             TypeWrapper.ClearCache();
         }
     }
+    internal class InternalUtil
+    {
+        internal static JavaScriptValue GetSavedString(JavaScriptValue callee,
+    [MarshalAs(UnmanagedType.U1)] bool isConstructCall,
+    [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] JavaScriptValue[] arguments,
+    ushort argumentCount,
+    IntPtr callbackData)
+        {
+            try
+            {
+                return JavaScriptValue.FromString((string)GCHandle.FromIntPtr(callbackData).Target);
+            }
+            catch (Exception e)
+            {
+                return ExceptionUtil.SetJSException(e);
+            }
+        }
+    }
 }
