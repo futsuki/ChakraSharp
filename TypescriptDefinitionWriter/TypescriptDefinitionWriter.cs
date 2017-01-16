@@ -24,7 +24,7 @@ namespace TypescriptDefinitionWriter
 
     public class TypescriptDefinitionWriter
     {
-        static char[] SpecialCharacters = "<>+`".ToCharArray();
+        static char[] SpecialCharacters = "<>$".ToCharArray();
         List<Type> GetCLRTypes(Assembly assembly)
         {
             var types = new List<Type>();
@@ -32,7 +32,11 @@ namespace TypescriptDefinitionWriter
             foreach (var t in assembly.GetTypes())
             {
                 if (t.IsSpecialName) continue;
-                if (t.IsSubclassOf(typeof(MulticastDelegate))) continue;
+                if (t.IsGenericType) continue;
+                if (t.IsGenericTypeDefinition) continue;
+                if (typeof(Delegate).IsAssignableFrom(t)) continue;
+                if (string.IsNullOrEmpty(t.FullName)) continue;
+                if (t.FullName.IndexOfAny(SpecialCharacters) != -1) continue;
                 types.Add(t);
             }
             return types;
@@ -160,7 +164,7 @@ namespace TypescriptDefinitionWriter
             {
             };
             ignoredType.ToList().ForEach(e => tdic.Remove(e));
-            types = tdic.Keys.Where(e => !e.IsArray).ToList();
+            types = tdic.Keys.Where(e => e != null && !e.IsArray).ToList();
 
             MakeTypeDic(types);
             foreach (var t in types)
@@ -170,12 +174,6 @@ namespace TypescriptDefinitionWriter
                 if (path.LastIndexOf('.') != -1)
                 {
                     ns = path.Substring(0, path.LastIndexOf('.'));
-                }
-                if (path.IndexOfAny(SpecialCharacters) != -1)
-                {
-                    //if (t.FullName.IndexOfAny(SpecialCharacters) != -1) {
-                    //Console.WriteLine("Ignored: " + path);
-                    continue;
                 }
                 var sb = new System.Text.StringBuilder();
                 if (!string.IsNullOrEmpty(ns))

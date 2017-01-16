@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Reflection;
+using System.IO;
 
 namespace TypescriptDefinitionWriter
 {
@@ -16,29 +18,32 @@ namespace TypescriptDefinitionWriter
             }
             var assemblyFile = args[0];
 
-            var exefile = System.Reflection.Assembly.GetEntryAssembly().Location;
-            var exedir = System.IO.Path.GetDirectoryName(exefile);
+            var exefile = Assembly.GetEntryAssembly().Location;
+            var exedir = Path.GetDirectoryName(exefile);
 
-            System.IO.Directory.SetCurrentDirectory(exedir);
-            assemblyFile = System.IO.Path.GetFullPath(assemblyFile);
-            var targetAssembly = System.Reflection.Assembly.LoadFile(assemblyFile);
+            Directory.SetCurrentDirectory(exedir);
+            assemblyFile = Path.GetFullPath(assemblyFile);
+            var targetAssembly = Assembly.LoadFile(assemblyFile);
             var w = new TypescriptDefinitionWriter();
-            var outdir = System.IO.Path.Combine(exedir, "output");
-            var outdata = w.MakeDefineFile(new[] { targetAssembly }, outdir+System.IO.Path.DirectorySeparatorChar);
-
-            //System.IO.Directory.CreateDirectory(outdir);
+            var outdir = Path.Combine(exedir, "output");
+            var outdata = w.MakeDefineFile(new[] { targetAssembly }, outdir+Path.DirectorySeparatorChar);
+            var outfile = Path.Combine(outdir, Path.ChangeExtension(Path.GetFileName(assemblyFile), "d.ts"));
+            Directory.CreateDirectory(outdir);
+            Console.WriteLine(string.Format("Output file: {0}", outfile));
+            var sb = new StringBuilder();
             foreach (var kv in outdata)
             {
-                System.IO.File.WriteAllText(kv.Key, kv.Value);
-                Console.WriteLine("Output "+System.IO.Path.GetFileName(kv.Key));
+                sb.AppendLine("// " + Path.GetFileName(kv.Key));
+                sb.AppendLine(kv.Value);
             }
-            Console.WriteLine("Finish!");
+            File.WriteAllText(outfile, sb.ToString());
+            Console.WriteLine(string.Format("Finish output {0} types", outdata.Keys.Count));
         }
 
         static void Help()
         {
-            var exefile = System.Reflection.Assembly.GetEntryAssembly().Location;
-            var file = System.IO.Path.GetFileName(exefile);
+            var exefile = Assembly.GetEntryAssembly().Location;
+            var file = Path.GetFileName(exefile);
             Console.WriteLine(string.Format(@"
 Usage:
     {0} assemblyfile
