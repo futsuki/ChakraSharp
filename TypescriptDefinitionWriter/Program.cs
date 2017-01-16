@@ -31,10 +31,13 @@ namespace TypescriptDefinitionWriter
             Directory.CreateDirectory(outdir);
             Console.WriteLine(string.Format("Output file: {0}", outfile));
             var sb = new StringBuilder();
-            foreach (var kv in outdata)
+            var keys = outdata.Keys.ToList();
+            keys.Sort();
+            foreach (var k in keys)
             {
-                sb.AppendLine("// " + Path.GetFileName(kv.Key));
-                sb.AppendLine(kv.Value);
+                var val = outdata[k];
+                sb.AppendLine("// " + Path.GetFileName(k));
+                sb.AppendLine(val);
             }
             File.WriteAllText(outfile, sb.ToString());
             Console.WriteLine(string.Format("Finish output {0} types", outdata.Keys.Count));

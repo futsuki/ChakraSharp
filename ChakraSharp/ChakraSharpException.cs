@@ -31,6 +31,7 @@ namespace ChakraSharp
         static public JavaScriptValue SetJSException(Exception e)
         {
             var v = JavaScriptValue.CreateExternalObject(GCHandle.ToIntPtr(GCHandle.Alloc(e)), Free);
+            v.SetIndexedProperty(JavaScriptValue.FromString("toString"), JavaScriptValue.FromString(e.ToString()));
             Native.JsSetException(JavaScriptValue.CreateError(v));
             return JavaScriptValue.Invalid;
         }

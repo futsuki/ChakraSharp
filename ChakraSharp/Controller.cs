@@ -53,16 +53,43 @@ namespace ChakraSharp
                     var column = ex.GetIndexedProperty(JavaScriptValue.FromString("column")).ConvertToString().ToString();
                     sb.AppendFormat("{0}\n   at code ({3}:{1}:{2})", message, line, column, location);
                 }
-                /*
                 else if (err == JavaScriptErrorCode.ScriptException)
                 {
-                    var message = ex.GetIndexedProperty(JavaScriptValue.FromString("message")).ConvertToString().ToString();
-                    var stack = ex.GetIndexedProperty(JavaScriptValue.FromString("stack")).ConvertToString().ToString();
-                    sb.AppendFormat("{0}\n{1}", message, stack);
+                    if (ex.ValueType == JavaScriptValueType.Error ||
+                        ex.ValueType == JavaScriptValueType.Object)
+                    {
+                        var messageobj = ex.GetIndexedProperty(JavaScriptValue.FromString("message"));
+                        IntPtr messageobjex = IntPtr.Zero;
+                        Native.JsGetExternalData(messageobj, out messageobjex);
+                        string message;
+                        if (messageobjex != IntPtr.Zero)
+                        {
+                            obj = GCHandle.FromIntPtr(messageobjex).Target;
+                            if (obj is Exception)
+                            {
+                                message = ((Exception)obj).Message;
+                            }
+                            else
+                            {
+                                message = obj.ToString();
+                            }
+                        }
+                        else
+                        {
+                            message = messageobj.ConvertToString().ToString();
+                        }
+                        var stack = ex.GetIndexedProperty(JavaScriptValue.FromString("stack")).ConvertToString().ToString();
+                        sb.AppendFormat("{0}\n{1}", message, stack);
+                    }
+                    else
+                    {
+                        sb.AppendFormat("{0}", ex.ConvertToString().ToString());
+                    }
                 }
-                */
-                else
+                else if (ex.ValueType == JavaScriptValueType.Error ||
+                    ex.ValueType == JavaScriptValueType.Object)
                 {
+                    Console.WriteLine("else error?");
                     var errorobj = ex.GetIndexedProperty(JavaScriptValue.FromString("message"));
                     p = IntPtr.Zero;
                     Native.JsGetExternalData(errorobj, out p);
@@ -70,8 +97,18 @@ namespace ChakraSharp
                     {
                         obj = GCHandle.FromIntPtr(p).Target;
                     }
-                    sb.Append(System.Convert.ToString(obj));
-                    //sb.Append(ex.ConvertToString().ToString());
+                    if (obj != null)
+                    {
+                        sb.Append(System.Convert.ToString(obj));
+                    }
+                    else
+                    {
+                        sb.Append(errorobj.ConvertToString().ToString());
+                    }
+                }
+                else
+                {
+                    sb.Append(ex.ConvertToString().ToString());
                 }
             }
             else

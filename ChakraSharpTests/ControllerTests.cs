@@ -453,6 +453,80 @@ return sb.ToString();
             }
         }
 
+
+        [TestMethod()]
+        public void ErrorTest1()
+        {
+            using (var c = MakeController())
+            {
+                try
+                {
+                    c.Evaluate("(void 0)[0] = 10;");
+                    Assert.Fail();
+                }
+                catch (ChakraSharpException e)
+                {
+                    Console.WriteLine(e);
+                }
+            }
+        }
+        [TestMethod()]
+        public void ErrorTest2()
+        {
+            using (var c = MakeController())
+            {
+                try
+                {
+                    c.Global["errorfunc"] = (Func<int>)(() => {
+                        if (true)
+                        {
+                            throw new Exception("throw!!");
+                        }
+                        return 1;
+                    });
+                    c.Evaluate("errorfunc();");
+                    Assert.Fail();
+                }
+                catch (ChakraSharpException e)
+                {
+                    Console.WriteLine(e);
+                }
+            }
+        }
+
+        [TestMethod()]
+        public void ErrorTest3()
+        {
+            using (var c = MakeController())
+            {
+                try
+                {
+                    c.Evaluate("throw \"throw!\";"); // no stacktrace
+                    Assert.Fail();
+                }
+                catch (ChakraSharpException e)
+                {
+                    Console.WriteLine(e);
+                }
+            }
+        }
+        [TestMethod()]
+        public void ErrorTest4()
+        {
+            using (var c = MakeController())
+            {
+                try
+                {
+                    c.Evaluate("throw new Error(\"throw!\");"); // with stacktrace
+                    Assert.Fail();
+                }
+                catch (ChakraSharpException e)
+                {
+                    Console.WriteLine(e);
+                }
+            }
+        }
+
         [TestMethod()]
         public void ClassWrapTest1()
         {
