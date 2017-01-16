@@ -71,7 +71,6 @@
     <Compile Include="Hosting\JavaScriptValueType.cs" />
     <Compile Include="Hosting\Native.cs" />
     <Compile Include="JSValue.cs" />
-    <Compile Include="Port.cs" />
     <Compile Include="Port\FunctionWrapper.cs" />
     <Compile Include="Port\JSFunctionInvoker.cs" />
     <Compile Include="Port\NamespaceWrapper.cs" />

@@ -519,6 +519,56 @@ return sb.ToString();
             }
         }
         [TestMethod()]
+        public void NestedClassWrapTest1()
+        {
+            using (var c = MakeController())
+            {
+                c.Global["TestClass3"] = Port.Util.WrapType(typeof(TestClass2.TestClass3));
+                c.Evaluate("var obj = new TestClass3()");
+                c.Evaluate("TestClass3.stNumber = 100;");
+                Assert.IsTrue((double)c.Evaluate("TestClass3.stNumber").GetObject() == 100);
+                c.Evaluate("TestClass3.stNumprop = 200;");
+                Assert.IsTrue((double)c.Evaluate("TestClass3.stNumprop").GetObject() == 200);
+
+                c.Evaluate("obj.number = 300;");
+                Assert.IsTrue((double)c.Evaluate("obj.number").GetObject() == 300);
+                c.Evaluate("obj.numprop = 400;");
+                Assert.IsTrue((double)c.Evaluate("obj.numprop").GetObject() == 400);
+
+                var obj = (TestClass2.TestClass3)c.Evaluate("obj").GetObject();
+                Assert.IsTrue(TestClass2.TestClass3.stNumber == 100);
+                Assert.IsTrue(TestClass2.TestClass3.stNumprop == 200);
+                Assert.IsTrue(obj.number == 300);
+                Assert.IsTrue(obj.numprop == 400);
+            }
+        }
+
+        [TestMethod()]
+        public void NestedClassWrapTest2()
+        {
+            using (var c = MakeController())
+            {
+                c.Global["Tests"] = Port.Util.WrapNamespace("ChakraSharp.Tests");
+                c.Evaluate("var obj = new Tests.ControllerTests.TestClass2.TestClass3()");
+                c.Evaluate("Tests.ControllerTests.TestClass2.TestClass3.stNumber = 100;");
+                Assert.IsTrue((double)c.Evaluate("Tests.ControllerTests.TestClass2.TestClass3.stNumber").GetObject() == 100);
+                c.Evaluate("Tests.ControllerTests.TestClass2.TestClass3.stNumprop = 200;");
+                Assert.IsTrue((double)c.Evaluate("Tests.ControllerTests.TestClass2.TestClass3.stNumprop").GetObject() == 200);
+
+                c.Evaluate("obj.number = 300;");
+                Assert.IsTrue((double)c.Evaluate("obj.number").GetObject() == 300);
+                c.Evaluate("obj.numprop = 400;");
+                Assert.IsTrue((double)c.Evaluate("obj.numprop").GetObject() == 400);
+
+                var obj = (TestClass2.TestClass3)c.Evaluate("obj").GetObject();
+                Assert.IsTrue(TestClass2.TestClass3.stNumber == 100);
+                Assert.IsTrue(TestClass2.TestClass3.stNumprop == 200);
+                Assert.IsTrue(obj.number == 300);
+                Assert.IsTrue(obj.numprop == 400);
+            }
+        }
+        //ChakraSharp.Tests
+        [TestMethod()]
         public void ClassWrapTest4()
         {
             using (var c = MakeController())
@@ -543,9 +593,23 @@ return sb.ToString();
                 c.Global["obj"] = JSValue.FromObject(new TestClass2());
 
                 c.Evaluate("obj.dg1 = function(v) { return +v + 10 };");
-                
+
                 var obj = (TestClass2)c.Evaluate("obj").GetObject();
                 Assert.IsTrue(obj.dg1(10) == 20);
+            }
+        }
+
+        [TestMethod()]
+        public void ClassWrapTest6()
+        {
+            using (var c = MakeController())
+            {
+                c.Global["System"] = Port.Util.WrapNamespace("System");
+                Assert.AreEqual(c.Evaluate("System").ToString(), "System");
+                Assert.AreEqual(c.Evaluate("System.Math").ToString(), "System.Math");
+                Assert.AreEqual(c.Evaluate("System.Linq").ToString(), "System.Linq");
+                Assert.AreEqual(c.Evaluate("System.Linq.Expressions").ToString(), "System.Linq.Expressions");
+                Assert.AreEqual(c.Evaluate("System.Linq.Expressions.Expression").ToString(), "System.Linq.Expressions.Expression");
             }
         }
 
@@ -563,6 +627,9 @@ return sb.ToString();
         }
         public class TestClass2 : TestClass1
         {
+            public class TestClass3 : TestClass1
+            {
+            }
         }
 
         [TestMethod()]
@@ -641,6 +708,29 @@ return sb.ToString();
                 Assert.IsTrue(arr["b"] == 20);
                 Assert.IsTrue(arr["c"] == 30);
             }
+        }
+
+        [TestMethod()]
+        public void TypeWrapTest1()
+        {
+            using (var c = MakeController())
+            {
+                c.Global["val1"] = JSValue.FromObject(1);
+                Assert.IsTrue((double)c.Evaluate("val1").GetObject() == 1);
+                c.Global["val2"] = JSValue.FromObject("ssss");
+                Assert.IsTrue((string)c.Evaluate("val2").GetObject() == "ssss");
+                c.Global["type"] = JSValue.FromObject(typeof(TestType1));
+                c.Evaluate("type.sfield1 = 1;");
+                Assert.IsTrue((Type)c.Evaluate("type").GetObject() == typeof(TestType1));
+                Assert.IsTrue(TestType1.sfield1 == 1);
+            }
+        }
+        public class TestType1
+        {
+            public int field1;
+            public string field2;
+            static public int sfield1;
+            static public string sfield2;
         }
 
         JavaScriptValue Log(JavaScriptValue callee,

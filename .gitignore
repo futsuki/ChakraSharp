@@ -4,3 +4,5 @@
 /ChakraSharp/obj
 /ChakraSharpTests/obj
 /ChakraSharpTests/bin
+/TypescriptDefinitionWriter/bin
+/TypescriptDefinitionWriter/obj
