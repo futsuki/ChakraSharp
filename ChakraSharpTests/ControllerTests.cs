@@ -16,7 +16,7 @@ namespace ChakraSharp.Tests
     {
         //Controller c;
 
-        Controller MakeController()
+        public static Controller MakeController()
         {
             var c = new Controller();
 
@@ -453,6 +453,63 @@ return sb.ToString();
             }
         }
 
+        [TestMethod()]
+        public void ActionTest2()
+        {
+            Console.WriteLine("1");
+            {
+                var dg = Port.InstanceMethodWrapper.ActionToFunc(((Action<int, int>)ControllerTests.a));
+                var f = (Func<int, int, object>)dg;
+                var o = f(1, 2);
+                a(1, 2);
+            }
+            Console.WriteLine("2");
+            {
+                var dg = Port.FunctionWrapper.ActionToFunc(((Action<int, int>)ControllerTests.a).Method);
+                Console.WriteLine("2_2: " + dg.GetType());
+                var f = (Func<int, int, object>)dg;
+                Console.WriteLine("2_3" + f);
+                var o = f(3, 4);
+                Console.WriteLine("2_4: " + o);
+                a(1, 2);
+            }
+            Console.WriteLine("3");
+            {
+                var dg = Port.FunctionWrapper.ActionToFunc(((Action<int, int>)this.b).Method);
+                Console.WriteLine("3_2: " + dg.GetType());
+                var f = (Func<ControllerTests, int, int, object>)dg;
+                Console.WriteLine("3_3" + f);
+                var o = f(this, 5, 6);
+                Console.WriteLine("3_4: " + o);
+                a(1, 2);
+            }
+            /*
+            {
+                Action actdg = () => { Console.WriteLine("dg"); };
+                //var dg = Port.InstanceMethodWrapper.ActionToFunc(actdg.GetType().GetMethod("Invoke"), actdg);
+                var dg = Port.InstanceMethodWrapper.ActionToFunc(actdg.Method, actdg.Target);
+                Console.WriteLine("dg2");
+                var f = (Func<object>)dg;
+                f();
+                actdg();
+            }
+            {
+                var dg = Port.InstanceMethodWrapper.ActionToFunc(((Action)this.b).Method);
+                var f = (Func<ControllerTests, object>)dg;
+                f(this);
+                b();
+            }
+            */
+        }
+        static void a(int i, int j)
+        {
+            Console.WriteLine("aa " + i + "," + j);
+        }
+        void b(int i, int j)
+        {
+            Console.WriteLine("bb "+i+ ","+j);
+        }
+
 
         [TestMethod()]
         public void ErrorTest1()
@@ -807,7 +864,7 @@ return sb.ToString();
             static public string sfield2;
         }
 
-        JavaScriptValue Log(JavaScriptValue callee,
+        static JavaScriptValue Log(JavaScriptValue callee,
             [MarshalAs(UnmanagedType.U1)] bool isConstructCall,
             [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] JavaScriptValue[] arguments,
             ushort argumentCount,
@@ -816,7 +873,7 @@ return sb.ToString();
             Console.WriteLine(string.Join(", ", arguments.Select(e => JSValue.Make(e).ToString()).ToArray()));
             return JavaScriptValue.Undefined;
         }
-        JavaScriptValue TestJSNativeFunction(JavaScriptValue callee,
+        static JavaScriptValue TestJSNativeFunction(JavaScriptValue callee,
             [MarshalAs(UnmanagedType.U1)] bool isConstructCall,
             [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] JavaScriptValue[] arguments,
             ushort argumentCount,
@@ -824,7 +881,7 @@ return sb.ToString();
         {
             return JavaScriptValue.FromDouble(1234);
         }
-        JavaScriptValue TestJSNativeFunction2(JavaScriptValue callee,
+        static JavaScriptValue TestJSNativeFunction2(JavaScriptValue callee,
             [MarshalAs(UnmanagedType.U1)] bool isConstructCall,
             [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] JavaScriptValue[] arguments,
             ushort argumentCount,
@@ -835,6 +892,22 @@ return sb.ToString();
         }
 
 
+        [TestMethod()]
+        public void Why()
+        {
+            using (var c = MakeController())
+            {
+                var o = new Object();
+                var v1 = JavaScriptValue.CreateExternalObject(GCHandle.ToIntPtr(GCHandle.Alloc(o)), Free);
+                Assert.IsTrue(v1.HasExternalData == true);
+                var v2 = JavaScriptValue.CreateObject();
+                Assert.IsTrue(v2.HasExternalData == false); // !?
+            }
+        }
+        static void Free(IntPtr p)
+        {
+            GCHandle.FromIntPtr(p).Free();
+        }
     }
 
 

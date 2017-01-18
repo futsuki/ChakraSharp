@@ -53,6 +53,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="ControllerTests.cs" />
+    <Compile Include="EasyBenchmark.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

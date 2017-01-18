@@ -38,7 +38,6 @@ namespace ChakraSharp.Port
             Native.ThrowIfError(Native.JsHasException(out b));
 
             var objval = JSValue.Make(res);
-            var obj = objval.GetObject();
             try
             {
                 if (outType == typeof(void))
@@ -47,10 +46,16 @@ namespace ChakraSharp.Port
                 }
                 else if (outType == typeof(JSValue))
                 {
+                    var obj = objval.GetObject();
                     return JSValue.FromObject(obj);
+                }
+                else if (outType == typeof(JavaScriptValue))
+                {
+                    return objval.rawvalue;
                 }
                 else
                 {
+                    var obj = objval.GetObject();
                     var obj2 = Convert.ChangeType(obj, outType);
                     return obj2;
                 }

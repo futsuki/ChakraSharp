@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using ChakraHost.Hosting;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Reflection.Emit;
 
 namespace ChakraSharp.Port
 {
@@ -121,6 +122,90 @@ namespace ChakraSharp.Port
                         Expression.Constant(convTo)
                 }),
                 convTo);
+        }
+
+
+        public static Delegate ActionToFunc(Delegate dg)
+        {
+            if (dg == null) throw new ArgumentNullException();
+            var mi = dg.Method;
+            if (mi.ReturnType != typeof(void))
+            {
+                throw new ChakraSharpException("Action only");
+            }
+            var assembly = AppDomain.CurrentDomain.DefineDynamicAssembly(
+                new AssemblyName("MyAssembly"), AssemblyBuilderAccess.Run);
+            var module = assembly.DefineDynamicModule("MyModule", true);
+            var name = mi.Name + "_ActionToFunc";
+            var tb = module.DefineType(name, TypeAttributes.Class | TypeAttributes.Public);
+            var ptypes = mi.GetParameters().Select(e => e.ParameterType).ToArray();
+            var ptypes_ret = ptypes.Concat(new[] { typeof(object) }).ToArray();
+            var method = tb.DefineMethod("body", MethodAttributes.Public, typeof(object), ptypes);
+            var defparam = mi.GetParameters().Select((e, i) =>
+            {
+                return method.DefineParameter(i + 1, ParameterAttributes.In, e.Name);
+            }).ToArray();
+            var dgfield = tb.DefineField("dg", dg.GetType(), FieldAttributes.Public | FieldAttributes.Family);
+            var invokeMethod = dg.GetType().GetMethod("Invoke");
+            var generator = method.GetILGenerator();
+            generator.Emit(OpCodes.Ldarg_0);
+            generator.Emit(OpCodes.Ldfld, dgfield);
+            for (var i = 0; i < ptypes.Length; i++)
+            {
+                generator.Emit(OpCodes.Ldarg_S, i + 1);
+            }
+            generator.Emit(OpCodes.Call, invokeMethod);
+            generator.Emit(OpCodes.Ldnull);
+            generator.Emit(OpCodes.Ret);
+
+            var tbt = tb.CreateType();
+            var ins = Activator.CreateInstance(tbt);
+            var dgf = tbt.GetField("dg");
+            dgf.SetValue(ins, dg);
+
+            var methodi = tbt.GetMethod("body");
+            var retdg = Delegate.CreateDelegate(Expression.GetFuncType(ptypes_ret), ins, methodi);
+            return retdg;
+        }
+        public static Delegate ActionToFunc(MethodInfo mi)
+        {
+            if (mi == null) throw new ArgumentNullException();
+            if (mi.ReturnType != typeof(void))
+            {
+                throw new ChakraSharpException("Action only");
+            }
+            var name = mi.Name + "_ActionToFunc";
+            var ptypes = mi.GetParameters().Select(e => e.ParameterType).ToArray();
+            ptypes = mi.IsStatic ? ptypes : new[] { mi.DeclaringType }.Concat(ptypes).ToArray();
+            var ptypes_ret = ptypes.Concat(new[] { typeof(object) }).ToArray();
+            var method = new DynamicMethod(name, typeof(object), ptypes, true);
+            var defparam = mi.GetParameters().Select((e, i) =>
+            {
+                return method.DefineParameter(i + 1, ParameterAttributes.In, e.Name);
+            }).ToArray();
+            var generator = method.GetILGenerator();
+            if (mi.IsStatic)
+            {
+                for (var i = 0; i < ptypes.Length; i++)
+                {
+                    generator.Emit(OpCodes.Ldarg_S, i);
+                }
+            }
+            else
+            {
+                generator.Emit(OpCodes.Ldarg_0);
+                generator.Emit(OpCodes.Castclass, mi.DeclaringType);
+                for (var i = 1; i < ptypes.Length; i++)
+                {
+                    generator.Emit(OpCodes.Ldarg_S, i);
+                }
+            }
+            generator.Emit(OpCodes.Call, mi);
+            generator.Emit(OpCodes.Ldnull);
+            generator.Emit(OpCodes.Ret);
+
+            var retdg = method.CreateDelegate(Expression.GetFuncType(ptypes_ret), null);
+            return retdg;
         }
     }
 
@@ -265,6 +350,22 @@ namespace ChakraSharp.Port
         {
             if (mi.ReturnType == typeof(void))
             {
+                /*
+                var wrapfun = ActionToFunc(mi);
+                var wrapfunexpr = Expression.Constant(wrapfun);
+                var parameters = Expression.Parameter(typeof(JavaScriptValue[]), "parameters");
+                var thisval = ConverterExpression(parameters, 0, mi.DeclaringType);
+                var converted = ps.Select((e, i) => ConverterExpression(parameters, i + 1, e.ParameterType)).ToArray();
+                if (!mi.IsStatic)
+                {
+                    converted = new [] { thisval }.Concat(converted).ToArray();
+                }
+                var lam = Expression.Lambda(typeof(Func<JavaScriptValue[], object>),
+                    Expression.Invoke(wrapfunexpr, converted),
+                    new[] { parameters });
+                var dg = lam.Compile();
+                return (Func<JavaScriptValue[], object>)dg;
+                */
                 // Action は Expression Tree で 呼ぶことができない
                 Func<JavaScriptValue[], object> ret = (values) =>
                 {
