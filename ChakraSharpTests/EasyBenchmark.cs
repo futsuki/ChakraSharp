@@ -128,7 +128,7 @@ namespace ChakraSharp.Tests
             }
         }
         [TestMethod()]
-        public void Benchmark6()
+        public void Benchmark5_3()
         {
             using (var c = ControllerTests.MakeController())
             {
@@ -136,7 +136,7 @@ namespace ChakraSharp.Tests
                 c.Evaluate("f(1, 2)");
                 Go(() =>
                 {
-                    c.Evaluate("for (var i=0; i<10000; i++) { f(1, 2); }");
+                    c.Evaluate("for (var i=0; i<10000; i++) { Math.sin(1); }");
                 });
                 Console.WriteLine(i);
             }
@@ -203,6 +203,44 @@ namespace ChakraSharp.Tests
             }
         }
         [TestMethod()]
+        public void Benchmark7_4()
+        {
+            // fastest js native function calling?
+            using (var c = ControllerTests.MakeController())
+            {
+                c.Evaluate("var i = 1");
+                var f = c.Evaluate("(function() { i += 1; })");
+                var vs = new JavaScriptValue[] {
+                    JavaScriptValue.GlobalObject
+                };
+                f.Call(vs);
+                var f2 = f.rawvalue;
+                Go(() =>
+                {
+                    for (var i = 0; i < 10000; i++)
+                    {
+                        f2.CallFunction(vs);
+                    }
+                });
+                Console.WriteLine(i);
+            }
+        }
+        [TestMethod()]
+        public void Benchmark7_5()
+        {
+            using (var c = ControllerTests.MakeController())
+            {
+                c.Evaluate("var i = 1");
+                c.Evaluate("var f = (function() { i += 1; })");
+                c.Evaluate("f()");
+                Go(() =>
+                {
+                    JavaScriptContext.RunScript("for (var i=0; i<10000;i++) { f() }");
+                });
+                Console.WriteLine(i);
+            }
+        }
+        [TestMethod()]
         public void Benchmark8()
         {
             using (var c = ControllerTests.MakeController())
@@ -263,6 +301,24 @@ namespace ChakraSharp.Tests
                     {
                         f.Call(vs);
                     }
+                });
+                Console.WriteLine(i);
+            }
+        }
+        [TestMethod()]
+        public void BenchmarkA_2()
+        {
+            using (var c = ControllerTests.MakeController())
+            {
+                c.Global["f"] = (JavaScriptNativeFunction)(jsnativefun1);
+                var f = c.Evaluate("f");
+                var vs = new JavaScriptValue[] {
+                    JavaScriptValue.Null,
+                };
+                f.Call(vs);
+                Go(() =>
+                {
+                    JavaScriptContext.RunScript("for (var i=0; i<10000;i++) { f() }");
                 });
                 Console.WriteLine(i);
             }
