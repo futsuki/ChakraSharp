@@ -33,7 +33,7 @@ namespace ChakraSharp.Port
         }
 
         Type type;
-        public JavaScriptValue mainValue;
+        JavaScriptValue mainValue;
         JavaScriptNativeFunction mainValueSrc;
         GCHandle thisPtr;
         GenericWrapper(Type type)
@@ -44,6 +44,7 @@ namespace ChakraSharp.Port
             thisPtr = GCHandle.Alloc(this);
             mainValueSrc = body;
             mainValue = JavaScriptValue.CreateFunction(mainValueSrc, GCHandle.ToIntPtr(thisPtr));
+            mainValue.AddRef();
         }
 
         public static JavaScriptValue body(JavaScriptValue callee,

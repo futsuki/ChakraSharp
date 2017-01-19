@@ -162,36 +162,35 @@ namespace ChakraSharp.Port
             return node;
         }
 
-        List<PropertyProxy> himo = new List<PropertyProxy>();
+        List<PropertyProxy> propertyProxies = new List<PropertyProxy>();
         void AssignToObject(JavaScriptValue obj)
         {
             if (children == null)
                 return;
             var getpropid = JavaScriptPropertyId.FromString("get");
             var setpropid = JavaScriptPropertyId.FromString("set");
-            himo = new List<PropertyProxy>();
             foreach (var kv in children)
             {
                 var n = kv.Value;
                 var t = n.type;
                 var prop = JavaScriptPropertyId.FromString(n.name);
                 var desc = JavaScriptValue.CreateObject();
-                var pp = new PropertyProxy();
-                himo.Add(pp);
-                pp.node = n;
-                pp.thisPtr = GCHandle.Alloc(pp);
-                desc.SetProperty(getpropid, JavaScriptValue.CreateFunction(PropertyProxy.PropertyGetterDg, GCHandle.ToIntPtr(pp.thisPtr)), true);
-                desc.SetProperty(setpropid, JavaScriptValue.CreateFunction(PropertyProxy.PropertySetterDg, GCHandle.ToIntPtr(pp.thisPtr)), true);
+                var proxy = new PropertyProxy(n);
+                propertyProxies.Add(proxy);
+                desc.SetProperty(getpropid, JavaScriptValue.CreateFunction(PropertyProxy.PropertyGetterDg, GCHandle.ToIntPtr(proxy.thisPtr)), true);
+                desc.SetProperty(setpropid, JavaScriptValue.CreateFunction(PropertyProxy.PropertySetterDg, GCHandle.ToIntPtr(proxy.thisPtr)), true);
                 obj.DefineProperty(prop, desc);
             }
         }
+        TypeWrapper typeWrapper;
         public JavaScriptValue GetJavaScriptValue()
         {
             if (!value.IsValid)
             {
                 if (isType)
                 {
-                    value = Util.WrapType(type);
+                    typeWrapper = TypeWrapper.Wrap(type);
+                    value = typeWrapper.GetJavaScriptValue();
                 }
                 else
                 {
@@ -199,6 +198,7 @@ namespace ChakraSharp.Port
                     value.SetIndexedProperty(JavaScriptValue.FromString("toString"),
                         JavaScriptValue.CreateFunction(InternalUtil.GetSavedStringDg, GCHandle.ToIntPtr(GCHandle.Alloc(path))));
                 }
+                value.AddRef();
                 AssignToObject(value);
             }
             return value;
@@ -208,20 +208,27 @@ namespace ChakraSharp.Port
 
         class PropertyProxy
         {
-            JavaScriptValue entitySymbol_;
+            static JavaScriptValue entitySymbol_;
             public GCHandle thisPtr;
             public NamespaceWrapper node;
 
             public static JavaScriptNativeFunction PropertyGetterDg = PropertyGetter;
             public static JavaScriptNativeFunction PropertySetterDg = PropertySetter;
 
-            public JavaScriptValue EntitySymbol
+            public PropertyProxy(NamespaceWrapper node)
+            {
+                this.node = node;
+                thisPtr = GCHandle.Alloc(this);
+            }
+
+            static public JavaScriptValue EntitySymbol
             {
                 get
                 {
                     if (!entitySymbol_.IsValid)
                     {
-                        Native.JsCreateSymbol(JavaScriptValue.FromString("CLRNativeValue"), out entitySymbol_);
+                        Native.ThrowIfError(Native.JsCreateSymbol(JavaScriptValue.FromString("CLRNativeValue"), out entitySymbol_));
+                        entitySymbol_.AddRef();
                     }
                     return entitySymbol_;
                 }
@@ -237,7 +244,7 @@ namespace ChakraSharp.Port
                 {
                     var that = (PropertyProxy)GCHandle.FromIntPtr(callbackData).Target;
                     var obj = arguments[0];
-                    var entity = obj.GetIndexedProperty(that.EntitySymbol);
+                    var entity = obj.GetIndexedProperty(EntitySymbol);
                     if (entity.ValueType == JavaScriptValueType.Undefined)
                     {
                         entity = that.node.GetJavaScriptValue();
@@ -260,7 +267,7 @@ namespace ChakraSharp.Port
                     var that = (PropertyProxy)GCHandle.FromIntPtr(callbackData).Target;
                     var obj = arguments[0];
                     var value = arguments[1];
-                    obj.SetIndexedProperty(that.EntitySymbol, value);
+                    obj.SetIndexedProperty(EntitySymbol, value);
                     return value;
                 }
                 catch (Exception e)

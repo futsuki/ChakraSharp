@@ -55,6 +55,7 @@ namespace ChakraSharp.Port
             {
                 jsvalueSrc = Wrap();
                 jsvalue = JavaScriptValue.CreateFunction(jsvalueSrc, GCHandle.ToIntPtr(thisPtr));
+                jsvalue.AddRef();
             }
             return jsvalue;
         }
@@ -270,7 +271,6 @@ namespace ChakraSharp.Port
             if (cache.ContainsKey(mi))
                 return cache[mi];
             var tw = new StaticMethodWrapper(mi);
-            GCHandle.Alloc(tw);
             cache[mi] = tw;
             return tw;
         }
@@ -318,10 +318,6 @@ namespace ChakraSharp.Port
 
     public class DelegateWrapper : FunctionWrapper
     {
-        Delegate dgvalue;
-        MethodInfo dgmi;
-        ParameterInfo[] ps;
-
         static Dictionary<Delegate, DelegateWrapper> cache = new Dictionary<Delegate, DelegateWrapper>();
         public static void ClearCache()
         {
@@ -333,10 +329,13 @@ namespace ChakraSharp.Port
             if (cache.ContainsKey(dg))
                 return cache[dg];
             var tw = new DelegateWrapper(dg);
-            GCHandle.Alloc(tw);
             cache[dg] = tw;
             return tw;
         }
+
+        Delegate dgvalue;
+        MethodInfo dgmi;
+        ParameterInfo[] ps;
 
         override public string GetName()
         {

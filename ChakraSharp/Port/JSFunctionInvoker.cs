@@ -12,7 +12,7 @@ namespace ChakraSharp.Port
 {
     public class JSFunctionInvoker
     {
-        public JavaScriptValue val;
+        public JavaScriptValue value;
         public Type outType;
         void actionBody(object[] o)
         {
@@ -22,7 +22,7 @@ namespace ChakraSharp.Port
         {
 
             JavaScriptValue res;
-            var err = Native.JsCallFunction(val, o.Select(e => JSValue.FromObject(e).rawvalue).ToArray(), (ushort)o.Length, out res);
+            var err = Native.JsCallFunction(value, o.Select(e => JSValue.FromObject(e).rawvalue).ToArray(), (ushort)o.Length, out res);
             if (err == JavaScriptErrorCode.ScriptException)
             {
                 JavaScriptValue ex;
@@ -82,7 +82,8 @@ namespace ChakraSharp.Port
             var ps = mi.GetParameters();
             var psnames = ps.Select(e => Expression.Parameter(e.ParameterType, e.Name)).ToArray();
             var fw = new JSFunctionInvoker();
-            fw.val = rawvalue;
+            fw.value = rawvalue;
+            fw.value.AddRef();
             fw.outType = mi.ReturnType;
             //var body = (Func<object[], object>)fw.body;
             var body = (Func<object[], object>)fw.body;

@@ -38,6 +38,7 @@ namespace ChakraSharp.Port
         public JavaScriptValue prototypeValue;
         public GCHandle thisPtr;
         object ctorWrapper;
+        string ctorStr, prototypeStr;
         TypeWrapper(Type type)
         {
             TypeWrapper baseTypeWrapper = null;
@@ -69,13 +70,16 @@ namespace ChakraSharp.Port
                 constructorValue = os.GetJavaScriptValue();
                 ctorWrapper = os;
             }
+            constructorValue.AddRef();
             prototypeValue = JavaScriptValue.CreateObject();
+            prototypeValue.AddRef();
             typePtr = GCHandle.Alloc(type);
             constructorValue.SetIndexedProperty(JavaScriptValue.FromString("_clrtypevalue"),
                 JavaScriptValue.CreateExternalObject(GCHandle.ToIntPtr(typePtr), FreeDg));
             // statics
+            ctorStr = type.FullName;
             constructorValue.SetIndexedProperty(JavaScriptValue.FromString("toString"),
-                JavaScriptValue.CreateFunction(InternalUtil.GetSavedStringDg, GCHandle.ToIntPtr(GCHandle.Alloc(type.FullName))));
+                JavaScriptValue.CreateFunction(InternalUtil.GetSavedStringDg, GCHandle.ToIntPtr(GCHandle.Alloc(ctorStr))));
             AssignMethodProc(constructorValue,
                 type.GetMethods(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Static));
             AssignFieldProc(constructorValue,
@@ -83,8 +87,9 @@ namespace ChakraSharp.Port
             AssignPropertyProc(constructorValue,
                 type.GetProperties(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Static));
             // instances
+            prototypeStr = type.FullName + " Instance";
             prototypeValue.SetIndexedProperty(JavaScriptValue.FromString("toString"),
-                JavaScriptValue.CreateFunction(InternalUtil.GetSavedStringDg, GCHandle.ToIntPtr(GCHandle.Alloc(type.FullName + " Instance"))));
+                JavaScriptValue.CreateFunction(InternalUtil.GetSavedStringDg, GCHandle.ToIntPtr(GCHandle.Alloc(prototypeStr))));
             AssignMethodProc(prototypeValue,
                 type.GetMethods(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Instance));
             AssignFieldProc(prototypeValue,

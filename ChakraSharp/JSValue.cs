@@ -526,5 +526,11 @@ namespace ChakraSharp
                 rawvalue.SetIndexedProperty(JavaScriptValue.FromInt32(key), value.rawvalue);
             }
         }
+
+
+        public uint AddRef()
+        {
+            return rawvalue.AddRef();
+        } 
     }
 }
