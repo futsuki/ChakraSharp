@@ -111,7 +111,6 @@ namespace ChakraSharp.Port
         static char[] SpecialChars = new[] { '<', '>' };
         static void EnsureNamespaceList()
         {
-            Console.WriteLine("enxure: ");
             if (allNodes != null)
                 return;
             typeToNode = new Dictionary<Type, NamespaceWrapper>();
@@ -126,7 +125,6 @@ namespace ChakraSharp.Port
                         continue;
                     if (t.IsGenericTypeDefinition)
                     {
-                        Console.WriteLine("def: "+ t);
                         continue;
                     }
                     else
