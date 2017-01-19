@@ -182,12 +182,8 @@ namespace ChakraSharp.Port
                 himo.Add(pp);
                 pp.node = n;
                 pp.thisPtr = GCHandle.Alloc(pp);
-                JavaScriptNativeFunction getdg = PropertyProxy.PropertyGetter;
-                JavaScriptNativeFunction setdg = PropertyProxy.PropertySetter;
-                GCHandle.Alloc(getdg);
-                GCHandle.Alloc(setdg);
-                desc.SetProperty(getpropid, JavaScriptValue.CreateFunction(getdg, GCHandle.ToIntPtr(pp.thisPtr)), true);
-                desc.SetProperty(setpropid, JavaScriptValue.CreateFunction(setdg, GCHandle.ToIntPtr(pp.thisPtr)), true);
+                desc.SetProperty(getpropid, JavaScriptValue.CreateFunction(PropertyProxy.PropertyGetterDg, GCHandle.ToIntPtr(pp.thisPtr)), true);
+                desc.SetProperty(setpropid, JavaScriptValue.CreateFunction(PropertyProxy.PropertySetterDg, GCHandle.ToIntPtr(pp.thisPtr)), true);
                 obj.DefineProperty(prop, desc);
             }
         }
@@ -202,10 +198,8 @@ namespace ChakraSharp.Port
                 else
                 {
                     value = JavaScriptValue.CreateObject();
-                    JavaScriptNativeFunction dg = InternalUtil.GetSavedString;
-                    GCHandle.Alloc(dg);
                     value.SetIndexedProperty(JavaScriptValue.FromString("toString"),
-                        JavaScriptValue.CreateFunction(dg, GCHandle.ToIntPtr(GCHandle.Alloc(path))));
+                        JavaScriptValue.CreateFunction(InternalUtil.GetSavedStringDg, GCHandle.ToIntPtr(GCHandle.Alloc(path))));
                 }
                 AssignToObject(value);
             }
@@ -219,6 +213,9 @@ namespace ChakraSharp.Port
             JavaScriptValue entitySymbol_;
             public GCHandle thisPtr;
             public NamespaceWrapper node;
+
+            public static JavaScriptNativeFunction PropertyGetterDg = PropertyGetter;
+            public static JavaScriptNativeFunction PropertySetterDg = PropertySetter;
 
             public JavaScriptValue EntitySymbol
             {

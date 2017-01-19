@@ -34,6 +34,7 @@ namespace ChakraSharp.Port
 
         Type type;
         public JavaScriptValue mainValue;
+        JavaScriptNativeFunction mainValueSrc;
         GCHandle thisPtr;
         GenericWrapper(Type type)
         {
@@ -41,9 +42,8 @@ namespace ChakraSharp.Port
             if (!type.IsGenericTypeDefinition)
                 throw new ChakraSharpException("Generic definition only");
             thisPtr = GCHandle.Alloc(this);
-            JavaScriptNativeFunction dg = body;
-            GCHandle.Alloc(dg);
-            mainValue = JavaScriptValue.CreateFunction(dg, GCHandle.ToIntPtr(thisPtr));
+            mainValueSrc = body;
+            mainValue = JavaScriptValue.CreateFunction(mainValueSrc, GCHandle.ToIntPtr(thisPtr));
         }
 
         public static JavaScriptValue body(JavaScriptValue callee,

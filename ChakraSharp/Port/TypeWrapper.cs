@@ -51,9 +51,7 @@ namespace ChakraSharp.Port
             thisPtr = GCHandle.Alloc(this);
             if (ctors.Length == 0)
             {
-                JavaScriptNativeFunction dg2 = NoConstructor;
-                GCHandle.Alloc(dg2);
-                constructorValue = JavaScriptValue.CreateFunction(dg2, GCHandle.ToIntPtr(thisPtr));
+                constructorValue = JavaScriptValue.CreateFunction(NoConstructorDg, GCHandle.ToIntPtr(thisPtr));
             }
             else if (ctors.Length == 1)
             {
@@ -76,10 +74,8 @@ namespace ChakraSharp.Port
             constructorValue.SetIndexedProperty(JavaScriptValue.FromString("_clrtypevalue"),
                 JavaScriptValue.CreateExternalObject(GCHandle.ToIntPtr(typePtr), FreeDg));
             // statics
-            JavaScriptNativeFunction dg = InternalUtil.GetSavedString;
-            GCHandle.Alloc(dg);
             constructorValue.SetIndexedProperty(JavaScriptValue.FromString("toString"),
-                JavaScriptValue.CreateFunction(dg, GCHandle.ToIntPtr(GCHandle.Alloc(type.FullName))));
+                JavaScriptValue.CreateFunction(InternalUtil.GetSavedStringDg, GCHandle.ToIntPtr(GCHandle.Alloc(type.FullName))));
             AssignMethodProc(constructorValue,
                 type.GetMethods(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Static));
             AssignFieldProc(constructorValue,
@@ -88,7 +84,7 @@ namespace ChakraSharp.Port
                 type.GetProperties(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Static));
             // instances
             prototypeValue.SetIndexedProperty(JavaScriptValue.FromString("toString"),
-                JavaScriptValue.CreateFunction(dg, GCHandle.ToIntPtr(GCHandle.Alloc(type.FullName + " Instance"))));
+                JavaScriptValue.CreateFunction(InternalUtil.GetSavedStringDg, GCHandle.ToIntPtr(GCHandle.Alloc(type.FullName + " Instance"))));
             AssignMethodProc(prototypeValue,
                 type.GetMethods(BindingFlags.Public | BindingFlags.DeclaredOnly | BindingFlags.Instance));
             AssignFieldProc(prototypeValue,
@@ -168,12 +164,8 @@ namespace ChakraSharp.Port
                 var desc = JavaScriptValue.CreateObject();
                 var id = JavaScriptPropertyId.FromString(f.Name);
                 var proxy = new FieldProxy(f);
-                JavaScriptNativeFunction getdg = FieldProxy.FieldGetter;
-                JavaScriptNativeFunction setdg = FieldProxy.FieldSetter;
-                GCHandle.Alloc(getdg);
-                GCHandle.Alloc(setdg);
-                desc.SetProperty(getpropid, JavaScriptValue.CreateFunction(getdg, GCHandle.ToIntPtr(proxy.thisPtr)), true);
-                desc.SetProperty(setpropid, JavaScriptValue.CreateFunction(setdg, GCHandle.ToIntPtr(proxy.thisPtr)), true);
+                desc.SetProperty(getpropid, JavaScriptValue.CreateFunction(FieldProxy.FieldGetterDg, GCHandle.ToIntPtr(proxy.thisPtr)), true);
+                desc.SetProperty(setpropid, JavaScriptValue.CreateFunction(FieldProxy.FieldSetterDg, GCHandle.ToIntPtr(proxy.thisPtr)), true);
                 setTo.DefineProperty(id, desc);
                 fieldWrappers.Add(proxy);
             }
@@ -189,6 +181,9 @@ namespace ChakraSharp.Port
             }
             Func<JavaScriptValue, object> getdg;
             Action<JavaScriptValue, JavaScriptValue> setdg;
+
+            public static JavaScriptNativeFunction FieldGetterDg = FieldGetter;
+            public static JavaScriptNativeFunction FieldSetterDg = FieldSetter;
 
             public static JavaScriptValue FieldGetter(JavaScriptValue callee,
                 [MarshalAs(UnmanagedType.U1)] bool isConstructCall,
@@ -269,12 +264,8 @@ namespace ChakraSharp.Port
                 var desc = JavaScriptValue.CreateObject();
                 var id = JavaScriptPropertyId.FromString(info.Name);
                 var proxy = new PropertyProxy(info);
-                JavaScriptNativeFunction getdg = PropertyProxy.PropertyGetter;
-                JavaScriptNativeFunction setdg = PropertyProxy.PropertySetter;
-                GCHandle.Alloc(getdg);
-                GCHandle.Alloc(setdg);
-                desc.SetProperty(getpropid, JavaScriptValue.CreateFunction(getdg, GCHandle.ToIntPtr(proxy.thisPtr)), true);
-                desc.SetProperty(setpropid, JavaScriptValue.CreateFunction(setdg, GCHandle.ToIntPtr(proxy.thisPtr)), true);
+                desc.SetProperty(getpropid, JavaScriptValue.CreateFunction(PropertyProxy.PropertyGetterDg, GCHandle.ToIntPtr(proxy.thisPtr)), true);
+                desc.SetProperty(setpropid, JavaScriptValue.CreateFunction(PropertyProxy.PropertySetterDg, GCHandle.ToIntPtr(proxy.thisPtr)), true);
                 setTo.DefineProperty(id, desc);
                 propertyWrappers.Add(proxy);
             }
@@ -290,6 +281,9 @@ namespace ChakraSharp.Port
             }
             Func<JavaScriptValue, object> getdg;
             Action<JavaScriptValue, JavaScriptValue> setdg;
+
+            public static JavaScriptNativeFunction PropertyGetterDg = PropertyGetter;
+            public static JavaScriptNativeFunction PropertySetterDg = PropertySetter;
 
             public static JavaScriptValue PropertyGetter(JavaScriptValue callee,
                 [MarshalAs(UnmanagedType.U1)] bool isConstructCall,
@@ -360,6 +354,7 @@ namespace ChakraSharp.Port
             }
         }
 
+        public JavaScriptNativeFunction NoConstructorDg = NoConstructor;
         static JavaScriptValue NoConstructor(JavaScriptValue callee,
             [MarshalAs(UnmanagedType.U1)] bool isConstructCall,
             [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] JavaScriptValue[] arguments,

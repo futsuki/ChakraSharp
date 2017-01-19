@@ -43,6 +43,7 @@ namespace ChakraSharp.Port
         }
 
         JavaScriptValue jsvalue;
+        JavaScriptNativeFunction jsvalueSrc;
         GCHandle thisPtr;
         public JavaScriptValue GetJavaScriptValue()
         {
@@ -52,9 +53,8 @@ namespace ChakraSharp.Port
             }
             if (!jsvalue.IsValid)
             {
-                var dg = Wrap();
-                GCHandle.Alloc(dg);
-                jsvalue = JavaScriptValue.CreateFunction(dg, GCHandle.ToIntPtr(thisPtr));
+                jsvalueSrc = Wrap();
+                jsvalue = JavaScriptValue.CreateFunction(jsvalueSrc, GCHandle.ToIntPtr(thisPtr));
             }
             return jsvalue;
         }

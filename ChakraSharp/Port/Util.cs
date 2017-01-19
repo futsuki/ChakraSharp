@@ -72,6 +72,7 @@ namespace ChakraSharp.Port
     }
     internal class InternalUtil
     {
+        internal static JavaScriptNativeFunction GetSavedStringDg = GetSavedString;
         internal static JavaScriptValue GetSavedString(JavaScriptValue callee,
     [MarshalAs(UnmanagedType.U1)] bool isConstructCall,
     [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] JavaScriptValue[] arguments,
