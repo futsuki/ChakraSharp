@@ -52,14 +52,16 @@ namespace ChakraSharp.Port
             }
             if (!jsvalue.IsValid)
             {
-                jsvalue = JavaScriptValue.CreateFunction(Wrap(), GCHandle.ToIntPtr(thisPtr));
+                var dg = Wrap();
+                GCHandle.Alloc(dg);
+                jsvalue = JavaScriptValue.CreateFunction(dg, GCHandle.ToIntPtr(thisPtr));
             }
             return jsvalue;
         }
         public void Dispose()
         {
             if (thisPtr.IsAllocated) {
-                thisPtr.Free();
+                //thisPtr.Free();
             }
         }
 
@@ -207,11 +209,26 @@ namespace ChakraSharp.Port
             var retdg = method.CreateDelegate(Expression.GetFuncType(ptypes_ret), null);
             return retdg;
         }
+
     }
 
 
     public class ConstructorWrapper : FunctionWrapper
     {
+        static Dictionary<ConstructorInfo, ConstructorWrapper> cache = new Dictionary<ConstructorInfo, ConstructorWrapper>();
+        public static void ClearCache()
+        {
+            cache = new Dictionary<ConstructorInfo, ConstructorWrapper>();
+        }
+        public static ConstructorWrapper Wrap(ConstructorInfo mi)
+        {
+            if (cache.ContainsKey(mi))
+                return cache[mi];
+            var tw = new ConstructorWrapper(mi);
+            cache[mi] = tw;
+            return tw;
+        }
+
         ConstructorInfo ci;
         ParameterInfo[] ps;
 
@@ -243,6 +260,21 @@ namespace ChakraSharp.Port
 
     public class StaticMethodWrapper : FunctionWrapper
     {
+        static Dictionary<MethodInfo, StaticMethodWrapper> cache = new Dictionary<MethodInfo, StaticMethodWrapper>();
+        public static void ClearCache()
+        {
+            cache = new Dictionary<MethodInfo, StaticMethodWrapper>();
+        }
+        public static StaticMethodWrapper Wrap(MethodInfo mi)
+        {
+            if (cache.ContainsKey(mi))
+                return cache[mi];
+            var tw = new StaticMethodWrapper(mi);
+            GCHandle.Alloc(tw);
+            cache[mi] = tw;
+            return tw;
+        }
+
         MethodInfo mi;
         ParameterInfo[] ps;
 
@@ -290,6 +322,22 @@ namespace ChakraSharp.Port
         MethodInfo dgmi;
         ParameterInfo[] ps;
 
+        static Dictionary<Delegate, DelegateWrapper> cache = new Dictionary<Delegate, DelegateWrapper>();
+        public static void ClearCache()
+        {
+            cache = new Dictionary<Delegate, DelegateWrapper>();
+        }
+
+        public static DelegateWrapper Wrap(Delegate dg)
+        {
+            if (cache.ContainsKey(dg))
+                return cache[dg];
+            var tw = new DelegateWrapper(dg);
+            GCHandle.Alloc(tw);
+            cache[dg] = tw;
+            return tw;
+        }
+
         override public string GetName()
         {
             return dgmi.DeclaringType.Name + "." + dgmi.Name;
@@ -330,6 +378,20 @@ namespace ChakraSharp.Port
 
     public class InstanceMethodWrapper : FunctionWrapper
     {
+        static Dictionary<MethodInfo, InstanceMethodWrapper> cache = new Dictionary<MethodInfo, InstanceMethodWrapper>();
+        public static void ClearCache()
+        {
+            cache = new Dictionary<MethodInfo, InstanceMethodWrapper>();
+        }
+        public static InstanceMethodWrapper Wrap(MethodInfo mi)
+        {
+            if (cache.ContainsKey(mi))
+                return cache[mi];
+            var tw = new InstanceMethodWrapper(mi);
+            cache[mi] = tw;
+            return tw;
+        }
+
         MethodInfo mi;
         ParameterInfo[] ps;
 

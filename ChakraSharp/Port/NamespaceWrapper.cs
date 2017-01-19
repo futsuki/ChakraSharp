@@ -27,6 +27,9 @@ namespace ChakraSharp.Port
         static NamespaceWrapper MakeType(Type t)
         {
             var p = t.FullName;
+            if (t.IsGenericTypeDefinition)
+                p = p.Substring(0, p.IndexOf('`'));
+            //Console.WriteLine(p);
             p = p.Replace('+', '.');
             var node = new NamespaceWrapper();
             node.type = t;
@@ -108,6 +111,7 @@ namespace ChakraSharp.Port
         static char[] SpecialChars = new[] { '<', '>' };
         static void EnsureNamespaceList()
         {
+            Console.WriteLine("enxure: ");
             if (allNodes != null)
                 return;
             typeToNode = new Dictionary<Type, NamespaceWrapper>();
@@ -121,13 +125,21 @@ namespace ChakraSharp.Port
                     if (t.IsGenericType)
                         continue;
                     if (t.IsGenericTypeDefinition)
+                    {
+                        Console.WriteLine("def: "+ t);
                         continue;
+                    }
+                    else
+                    {
+                        if (t.IsGenericType)
+                            continue;
+                    }
                     if (t.IsInterface)
                         continue;
                     if (!t.IsVisible)
                         continue;
                     var p = t.FullName;
-                    if (p.IndexOfAny(SpecialChars) != -1)
+                    if (!t.IsGenericTypeDefinition && p.IndexOfAny(SpecialChars) != -1)
                         continue;
 
                     var node = NamespaceWrapper.MakeType(t);
@@ -152,12 +164,14 @@ namespace ChakraSharp.Port
             return node;
         }
 
+        List<PropertyProxy> himo = new List<PropertyProxy>();
         void AssignToObject(JavaScriptValue obj)
         {
             if (children == null)
                 return;
             var getpropid = JavaScriptPropertyId.FromString("get");
             var setpropid = JavaScriptPropertyId.FromString("set");
+            himo = new List<PropertyProxy>();
             foreach (var kv in children)
             {
                 var n = kv.Value;
@@ -165,9 +179,15 @@ namespace ChakraSharp.Port
                 var prop = JavaScriptPropertyId.FromString(n.name);
                 var desc = JavaScriptValue.CreateObject();
                 var pp = new PropertyProxy();
+                himo.Add(pp);
                 pp.node = n;
-                desc.SetProperty(getpropid, JavaScriptValue.CreateFunction(PropertyProxy.PropertyGetter, GCHandle.ToIntPtr(GCHandle.Alloc(pp))), true);
-                desc.SetProperty(setpropid, JavaScriptValue.CreateFunction(PropertyProxy.PropertySetter, GCHandle.ToIntPtr(GCHandle.Alloc(pp))), true);
+                pp.thisPtr = GCHandle.Alloc(pp);
+                JavaScriptNativeFunction getdg = PropertyProxy.PropertyGetter;
+                JavaScriptNativeFunction setdg = PropertyProxy.PropertySetter;
+                GCHandle.Alloc(getdg);
+                GCHandle.Alloc(setdg);
+                desc.SetProperty(getpropid, JavaScriptValue.CreateFunction(getdg, GCHandle.ToIntPtr(pp.thisPtr)), true);
+                desc.SetProperty(setpropid, JavaScriptValue.CreateFunction(setdg, GCHandle.ToIntPtr(pp.thisPtr)), true);
                 obj.DefineProperty(prop, desc);
             }
         }
@@ -182,8 +202,10 @@ namespace ChakraSharp.Port
                 else
                 {
                     value = JavaScriptValue.CreateObject();
+                    JavaScriptNativeFunction dg = InternalUtil.GetSavedString;
+                    GCHandle.Alloc(dg);
                     value.SetIndexedProperty(JavaScriptValue.FromString("toString"),
-                        JavaScriptValue.CreateFunction(InternalUtil.GetSavedString, GCHandle.ToIntPtr(GCHandle.Alloc(path))));
+                        JavaScriptValue.CreateFunction(dg, GCHandle.ToIntPtr(GCHandle.Alloc(path))));
                 }
                 AssignToObject(value);
             }
@@ -195,6 +217,7 @@ namespace ChakraSharp.Port
         class PropertyProxy
         {
             JavaScriptValue entitySymbol_;
+            public GCHandle thisPtr;
             public NamespaceWrapper node;
 
             public JavaScriptValue EntitySymbol

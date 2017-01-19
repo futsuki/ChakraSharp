@@ -72,6 +72,7 @@
     <Compile Include="Hosting\Native.cs" />
     <Compile Include="JSValue.cs" />
     <Compile Include="Port\FunctionWrapper.cs" />
+    <Compile Include="Port\GenericWrapper.cs" />
     <Compile Include="Port\JSFunctionInvoker.cs" />
     <Compile Include="Port\NamespaceWrapper.cs" />
     <Compile Include="Port\OverloadSelector.cs" />

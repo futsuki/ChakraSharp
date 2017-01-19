@@ -334,7 +334,9 @@ namespace ChakraSharp
                 case TypeCode.Object:
                     if (o is JavaScriptNativeFunction)
                     {
-                        rawvalue = JavaScriptValue.CreateFunction((JavaScriptNativeFunction)o);
+                        var dg = (JavaScriptNativeFunction)o;
+                        GCHandle.Alloc(dg);
+                        rawvalue = JavaScriptValue.CreateFunction(dg);
                     }
                     else if (o is Delegate)
                     {
@@ -356,18 +358,26 @@ namespace ChakraSharp
                     else
                     {
                         var wrapped = Port.TypeWrapper.Wrap(o.GetType());
-                        rawvalue = JavaScriptValue.CreateExternalObject(GCHandle.ToIntPtr(GCHandle.Alloc(o)), HandleFinalize);
+                        rawvalue = JavaScriptValue.CreateExternalObject(GCHandle.ToIntPtr(GCHandle.Alloc(o)), HandleFinalizeDg);
                         rawvalue.Prototype = wrapped.prototypeValue;
                     }
                     break;
 
             }
         }
+        static JavaScriptObjectFinalizeCallback HandleFinalizeDg = HandleFinalize;
         static void HandleFinalize(IntPtr ptr)
         {
-            var handle = GCHandle.FromIntPtr(ptr);
-            handle.Free();
-        }
+            try
+            {
+                //var handle = GCHandle.FromIntPtr(ptr);
+                //handle.Free();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+}
 
         public static implicit operator JSValue(bool v)
         {

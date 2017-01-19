@@ -23,7 +23,7 @@ namespace ChakraSharp.Port
             }
             public FunctionWrapper entityWrapper;
             public JavaScriptNativeFunction cachedFunction;
-            public IntPtr cachedData;
+            public GCHandle cachedData;
 
             public OverloadEntry(MethodBase mi)
             {
@@ -52,7 +52,7 @@ namespace ChakraSharp.Port
 
                 cachedFunction = null;
                 entityWrapper = null;
-                cachedData = IntPtr.Zero;
+                cachedData = default(GCHandle);
                 if (mi is ConstructorInfo)
                 {
                     entityWrapper = new ConstructorWrapper((ConstructorInfo)mi);
@@ -250,9 +250,9 @@ namespace ChakraSharp.Port
                 var method = that.methodInfos[lastIdx];
                 if (method.cachedFunction == null)
                     method.cachedFunction = method.entityWrapper.Wrap();
-                if (method.cachedData == IntPtr.Zero)
-                    method.cachedData = GCHandle.ToIntPtr(GCHandle.Alloc(method.entityWrapper));
-                return method.cachedFunction(callee, isConstructCall, arguments, argumentCount, method.cachedData);
+                if (!method.cachedData.IsAllocated)
+                    method.cachedData = GCHandle.Alloc(method.entityWrapper);
+                return method.cachedFunction(callee, isConstructCall, arguments, argumentCount, GCHandle.ToIntPtr(method.cachedData));
             }
             catch (Exception e)
             {

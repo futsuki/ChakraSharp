@@ -22,24 +22,32 @@ namespace ChakraSharp.Port
         {
             if (mi.IsStatic)
             {
-                var c = new StaticMethodWrapper(mi);
+                var c = StaticMethodWrapper.Wrap(mi);
                 return c.GetJavaScriptValue();
             }
             else
             {
-                var c = new InstanceMethodWrapper(mi);
+                var c = InstanceMethodWrapper.Wrap(mi);
                 return c.GetJavaScriptValue();
             }
         }
         public static JavaScriptValue WrapDelegate(Delegate dg)
         {
-            var c = new DelegateWrapper(dg);
+            var c = DelegateWrapper.Wrap(dg);
             return c.GetJavaScriptValue();
         }
         public static JavaScriptValue WrapType(Type t)
         {
-            var c = TypeWrapper.Wrap(t);
-            return c.GetJavaScriptValue();
+            if (t.IsGenericTypeDefinition)
+            {
+                var o = GenericWrapper.Wrap(t);
+                return o.GetJavaScriptValue();
+            }
+            else
+            {
+                var c = TypeWrapper.Wrap(t);
+                return c.GetJavaScriptValue();
+            }
         }
         public static JavaScriptValue WrapNamespace(string path)
         {
@@ -56,6 +64,10 @@ namespace ChakraSharp.Port
         {
             NamespaceWrapper.ClearCache();
             TypeWrapper.ClearCache();
+            GenericWrapper.ClearCache();
+            DelegateWrapper.ClearCache();
+            InstanceMethodWrapper.ClearCache();
+            StaticMethodWrapper.ClearCache();
         }
     }
     internal class InternalUtil
