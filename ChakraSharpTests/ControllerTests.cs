@@ -55,9 +55,11 @@ namespace ChakraSharp.Tests
                     c.Global["f1"] = Port.Util.WrapDelegate(f);
                     c.Evaluate("f1()");
                 };
-                a();
-                GC.Collect();
-                a();
+                for (var i = 0; i < 10; i++)
+                {
+                    a();
+                    GC.Collect();
+                }
             }
         }
         [TestMethod()]
@@ -70,9 +72,11 @@ namespace ChakraSharp.Tests
                     c.Global["f2"] = Port.Util.WrapMethod(typeof(ControllerTests).GetMethod("test1"));
                     c.Evaluate("f2()");
                 };
-                a();
-                GC.Collect();
-                a();
+                for (var i = 0; i < 10; i++)
+                {
+                    a();
+                    GC.Collect();
+                }
             }
         }
         [TestMethod()]
@@ -84,9 +88,11 @@ namespace ChakraSharp.Tests
                 {
                     c.Global["clrmath"] = Port.Util.WrapType(typeof(Math));
                 };
-                a();
-                GC.Collect();
-                a();
+                for (var i = 0; i < 10; i++)
+                {
+                    a();
+                    GC.Collect();
+                }
             }
         }
         [TestMethod()]
@@ -99,9 +105,11 @@ namespace ChakraSharp.Tests
                     c.Global["clrmath"] = Port.Util.WrapType(typeof(Math));
                     c.Evaluate("clrmath.Sin(1)");
                 };
-                a();
-                GC.Collect();
-                a();
+                for (var i = 0; i < 10; i++)
+                {
+                    a();
+                    GC.Collect();
+                }
             }
         }
         [TestMethod()]
@@ -113,9 +121,11 @@ namespace ChakraSharp.Tests
                 {
                     c.Global["System"] = Port.Util.WrapNamespace("System");
                 };
-                a();
-                GC.Collect();
-                a();
+                for (var i = 0; i < 10; i++)
+                {
+                    a();
+                    GC.Collect();
+                }
             }
         }
         [TestMethod()]
@@ -128,9 +138,48 @@ namespace ChakraSharp.Tests
                     c.Global["System"] = Port.Util.WrapNamespace("System");
                     Assert.IsTrue(ApproxEquals((double)c.Evaluate("System.Math.Sin(0.1)").GetObject(), Math.Sin(0.1)));
                 };
-                a();
-                GC.Collect();
-                a();
+                for (var i = 0; i < 10; i++)
+                {
+                    a();
+                    GC.Collect();
+                }
+            }
+        }
+        [TestMethod()]
+        public void GCTest6()
+        {
+            //using (var c = MakeController())
+            var c = MakeController();
+            {
+                var n = Port.NamespaceWrapper.Get("System");
+                var n2 = Port.NamespaceWrapper.Get("System.Collections");
+                c.Global["System"] = n.GetJavaScriptValue();
+                for (var i = 0; i < 1000; i++)
+                {
+                    var bytes = new byte[10000];
+                    Console.WriteLine(i + ": " + GC.GetTotalMemory(false));
+                    var s = c.Evaluate("System");
+                    //Assert.IsTrue((string)c.Evaluate("\"\" + System.Math").GetObject() == "System");
+                    Assert.IsTrue((string)c.Evaluate("\"\" + System.Collections").GetObject() == "System.Collections");
+                    //Assert.IsTrue(ApproxEquals((double)c.Evaluate("System.Math.Sin(0.1)").GetObject(), Math.Sin(0.1)));
+                }
+            }
+        }
+        [TestMethod()]
+        public void GCTest6_2()
+        {
+            //using (var c = MakeController())
+            var c = MakeController();
+            {
+                c.Global["Math"] = Port.Util.WrapType(typeof(System.Math));
+                for (var i = 0; i < 1000; i++)
+                {
+                    var bytes = new byte[10000];
+                    Console.WriteLine(i + ": " + GC.GetTotalMemory(false));
+                    //Assert.IsTrue((string)c.Evaluate("\"\" + System.Math").GetObject() == "System");
+                    Assert.IsTrue(ApproxEquals((double)c.Evaluate("Math.Sin(1)").GetObject(), Math.Sin(1)));
+                    //Assert.IsTrue(ApproxEquals((double)c.Evaluate("System.Math.Sin(0.1)").GetObject(), Math.Sin(0.1)));
+                }
             }
         }
         public static int test1()
@@ -152,6 +201,7 @@ namespace ChakraSharp.Tests
                 c.Evaluate("dgl.Invoke();");
                 c.Evaluate("dgl.Invoke();");
                 Assert.IsTrue(ApproxEquals((double)c.Evaluate("val").GetObject(), 22));
+                GC.Collect();
             }
         }
         [TestMethod()]
@@ -168,6 +218,7 @@ namespace ChakraSharp.Tests
                 c.Evaluate("dgl.Invoke();");
                 c.Evaluate("dgl.Invoke();");
                 Assert.IsTrue(ApproxEquals((double)c.Evaluate("val").GetObject(), 22));
+                GC.Collect();
             }
         }
         [TestMethod()]
@@ -183,6 +234,7 @@ namespace ChakraSharp.Tests
                 c.Evaluate("dg();");
                 DGTestClass1.dg();
                 Assert.IsTrue(ApproxEquals((double)c.Evaluate("val").GetObject(), 15));
+                GC.Collect();
             }
         }
         [TestMethod()]
@@ -199,6 +251,7 @@ namespace ChakraSharp.Tests
                 c.Evaluate("dgl.Invoke();");
                 c.Evaluate("dgl.Invoke();");
                 Assert.IsTrue(ApproxEquals((double)c.Evaluate("val").GetObject(), 52));
+                GC.Collect();
             }
         }
 
