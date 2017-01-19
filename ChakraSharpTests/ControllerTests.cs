@@ -43,6 +43,101 @@ namespace ChakraSharp.Tests
             }
         }
 
+
+        [TestMethod()]
+        public void GCTest1()
+        {
+            using (var c = MakeController())
+            {
+                Func<int> f = () => 1;
+                Action a = () =>
+                {
+                    c.Global["f1"] = Port.Util.WrapDelegate(f);
+                    c.Evaluate("f1()");
+                };
+                a();
+                GC.Collect();
+                a();
+            }
+        }
+        [TestMethod()]
+        public void GCTest2()
+        {
+            using (var c = MakeController())
+            {
+                Action a = () =>
+                {
+                    c.Global["f2"] = Port.Util.WrapMethod(typeof(ControllerTests).GetMethod("test1"));
+                    c.Evaluate("f2()");
+                };
+                a();
+                GC.Collect();
+                a();
+            }
+        }
+        [TestMethod()]
+        public void GCTest3()
+        {
+            using (var c = MakeController())
+            {
+                Action a = () =>
+                {
+                    c.Global["clrmath"] = Port.Util.WrapType(typeof(Math));
+                };
+                a();
+                GC.Collect();
+                a();
+            }
+        }
+        [TestMethod()]
+        public void GCTest3_2()
+        {
+            using (var c = MakeController())
+            {
+                Action a = () =>
+                {
+                    c.Global["clrmath"] = Port.Util.WrapType(typeof(Math));
+                    c.Evaluate("clrmath.Sin(1)");
+                };
+                a();
+                GC.Collect();
+                a();
+            }
+        }
+        [TestMethod()]
+        public void GCTest4()
+        {
+            using (var c = MakeController())
+            {
+                Action a = () =>
+                {
+                    c.Global["System"] = Port.Util.WrapNamespace("System");
+                };
+                a();
+                GC.Collect();
+                a();
+            }
+        }
+        [TestMethod()]
+        public void GCTest5()
+        {
+            using (var c = MakeController())
+            {
+                Action a = () =>
+                {
+                    c.Global["System"] = Port.Util.WrapNamespace("System");
+                    Assert.IsTrue(ApproxEquals((double)c.Evaluate("System.Math.Sin(0.1)").GetObject(), Math.Sin(0.1)));
+                };
+                a();
+                GC.Collect();
+                a();
+            }
+        }
+        public static int test1()
+        {
+            return 1;
+        }
+
         [TestMethod()]
         public void DelegateTest1()
         {
@@ -453,6 +548,7 @@ return sb.ToString();
             }
         }
 
+
         [TestMethod()]
         public void ActionTest2()
         {
@@ -510,6 +606,24 @@ return sb.ToString();
             Console.WriteLine("bb "+i+ ","+j);
         }
 
+        [TestMethod()]
+        public void GenericTest1()
+        {
+            using (var c = MakeController())
+            {
+                c.Global["System"] = Port.Util.WrapNamespace("System");
+                c.Global["GList"] = Port.Util.WrapType(typeof(List<>));
+                //c.Evaluate("var intlist = System.Collections.Generic.List(System.Int32);");
+                c.Evaluate("var intlist = GList(System.Int32);");
+                c.Evaluate("var il = new intlist()");
+                c.Evaluate("il.Add(10)");
+                var o = c.Evaluate("il").GetObject();
+                Assert.IsTrue(o.GetType() == typeof(List<int>));
+                var obj = (List<int>)o;
+                Assert.IsTrue(obj.Count == 1);
+                Assert.IsTrue(obj[0] == 10);
+            }
+        }
 
         [TestMethod()]
         public void ErrorTest1()
