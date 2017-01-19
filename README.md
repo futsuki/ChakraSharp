@@ -1,5 +1,5 @@
 # ChakraSharp
-ChakraCore wrapper in C#
+[ChakraCore](https://github.com/Microsoft/ChakraCore) wrapper in C#
 
 今のところLinuxなどでのネイティブバイナリライブラリとの連携方法に詳しくないのでwindowsでしか試しておりません。
 
