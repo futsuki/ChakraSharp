@@ -182,6 +182,25 @@ namespace ChakraSharp.Tests
                 }
             }
         }
+        [TestMethod()]
+        public void GCTest6_3()
+        {
+            //using (var c = MakeController())
+            for (var i = 0; i < 100; i++)
+            {
+                Console.WriteLine(i);
+                var c = MakeController();
+                {
+                    c.Global["Math"] = Port.Util.WrapType(typeof(System.Math));
+
+                    //var bytes = new byte[10000];
+                    Console.WriteLine(i + ": " + GC.GetTotalMemory(false));
+                    //Assert.IsTrue((string)c.Evaluate("\"\" + System.Math").GetObject() == "System");
+                    Assert.IsTrue(ApproxEquals((double)c.Evaluate("Math.Sin(1)").GetObject(), Math.Sin(1)));
+                    //Assert.IsTrue(ApproxEquals((double)c.Evaluate("System.Math.Sin(0.1)").GetObject(), Math.Sin(0.1)));
+                }
+            }
+        }
         public static int test1()
         {
             return 1;

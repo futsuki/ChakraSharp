@@ -144,6 +144,7 @@ namespace ChakraSharp
         public void Dispose()
         {
             JavaScriptContext.Current = JavaScriptContext.Invalid;
+            context = JavaScriptContext.Invalid;
             runtime.Dispose();
             Port.Util.ClearCache();
         }

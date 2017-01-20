@@ -68,6 +68,7 @@ namespace ChakraSharp.Port
             DelegateWrapper.ClearCache();
             InstanceMethodWrapper.ClearCache();
             StaticMethodWrapper.ClearCache();
+            ConstructorWrapper.ClearCache();
         }
     }
     internal class InternalUtil
