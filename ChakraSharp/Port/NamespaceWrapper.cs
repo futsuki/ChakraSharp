@@ -208,7 +208,7 @@ namespace ChakraSharp.Port
 
         class PropertyProxy
         {
-            static JavaScriptValue entitySymbol_;
+            JavaScriptValue entitySymbol_;
             public GCHandle thisPtr;
             public NamespaceWrapper node;
 
@@ -221,7 +221,7 @@ namespace ChakraSharp.Port
                 thisPtr = GCHandle.Alloc(this);
             }
 
-            static public JavaScriptValue EntitySymbol
+            public JavaScriptValue EntitySymbol
             {
                 get
                 {
@@ -244,7 +244,7 @@ namespace ChakraSharp.Port
                 {
                     var that = (PropertyProxy)GCHandle.FromIntPtr(callbackData).Target;
                     var obj = arguments[0];
-                    var entity = obj.GetIndexedProperty(EntitySymbol);
+                    var entity = obj.GetIndexedProperty(that.EntitySymbol);
                     if (entity.ValueType == JavaScriptValueType.Undefined)
                     {
                         entity = that.node.GetJavaScriptValue();
@@ -267,7 +267,7 @@ namespace ChakraSharp.Port
                     var that = (PropertyProxy)GCHandle.FromIntPtr(callbackData).Target;
                     var obj = arguments[0];
                     var value = arguments[1];
-                    obj.SetIndexedProperty(EntitySymbol, value);
+                    obj.SetIndexedProperty(that.EntitySymbol, value);
                     return value;
                 }
                 catch (Exception e)

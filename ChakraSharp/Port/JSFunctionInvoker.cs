@@ -12,6 +12,7 @@ namespace ChakraSharp.Port
 {
     public class JSFunctionInvoker
     {
+        static List<Delegate> allValues = new List<Delegate>();
         public JavaScriptValue value;
         public Type outType;
         void actionBody(object[] o)
@@ -110,6 +111,7 @@ namespace ChakraSharp.Port
             }
             var f2 = Expression.Lambda(type, call, psnames);
             var dg2 = f2.Compile();
+            allValues.Add(dg2);
             return dg2;
         }
 

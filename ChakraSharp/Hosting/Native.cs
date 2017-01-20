@@ -111,13 +111,16 @@
                     case JavaScriptErrorCode.Fatal:
                         throw new JavaScriptFatalException(error);
 
+                    case JavaScriptErrorCode.WrongRuntime:
+                        throw new JavaScriptFatalException(error, "A hosting API was called with object created on different javascript runtime.");
+
                     default:
-                        throw new JavaScriptFatalException(error);
+                        throw new JavaScriptFatalException(error, ""+error);
                 }
             }
         }
 
-        const string DllName = "ChakraCore.dll";
+        const string DllName = "ChakraCore";
 
         [DllImport(DllName)]
         internal static extern JavaScriptErrorCode JsCreateRuntime(JavaScriptRuntimeAttributes attributes, JavaScriptThreadServiceCallback threadService, out JavaScriptRuntime runtime);
