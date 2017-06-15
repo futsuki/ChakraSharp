@@ -111,11 +111,8 @@
                     case JavaScriptErrorCode.Fatal:
                         throw new JavaScriptFatalException(error);
 
-                    case JavaScriptErrorCode.WrongRuntime:
-                        throw new JavaScriptFatalException(error, "A hosting API was called with object created on different javascript runtime.");
-
                     default:
-                        throw new JavaScriptFatalException(error, ""+error);
+                        throw new JavaScriptFatalException(error);
                 }
             }
         }
@@ -382,16 +379,16 @@
         internal static extern JavaScriptErrorCode JsCreateDataView(JavaScriptValue arrayBuffer, uint byteOffset, uint byteOffsetLength, out JavaScriptValue result);
 
         [DllImport(DllName)]
-        internal static extern JavaScriptErrorCode JsGetArrayBufferStorage(JavaScriptValue arrayBuffer, out byte[] buffer, out uint bufferLength);
+        internal static extern JavaScriptErrorCode JsGetArrayBufferStorage(JavaScriptValue arrayBuffer, out IntPtr buffer, out uint bufferLength);
 
         [DllImport(DllName)]
-        internal static extern JavaScriptErrorCode JsGetTypedArrayStorage(JavaScriptValue typedArray, out byte[] buffer, out uint bufferLength, out JavaScriptTypedArrayType arrayType, out int elementSize);
+        internal static extern JavaScriptErrorCode JsGetTypedArrayStorage(JavaScriptValue typedArray, out IntPtr buffer, out uint bufferLength, out JavaScriptTypedArrayType arrayType, out int elementSize);
 
         [DllImport(DllName)]
-        internal static extern JavaScriptErrorCode JsGetDataViewStorage(JavaScriptValue dataView, out byte[] buffer, out uint bufferLength);
+        internal static extern JavaScriptErrorCode JsGetDataViewStorage(JavaScriptValue dataView, out IntPtr buffer, out uint bufferLength);
 
         [DllImport(DllName)]
-        internal static extern JavaScriptErrorCode JsGetPropertyIdType(JavaScriptPropertyId propertyId, out JavaSciptPropertyIdType propertyIdType);
+        internal static extern JavaScriptErrorCode JsGetPropertyIdType(JavaScriptPropertyId propertyId, out JavaScriptPropertyIdType propertyIdType);
 
         [DllImport(DllName)]
         internal static extern JavaScriptErrorCode JsCreateSymbol(JavaScriptValue description, out JavaScriptValue symbol);
@@ -421,7 +418,7 @@
         internal static extern JavaScriptErrorCode JsInstanceOf(JavaScriptValue obj, JavaScriptValue constructor, out bool result);
 
         [DllImport(DllName)]
-        internal static extern JavaScriptErrorCode JsCreateExternalArrayBuffer(IntPtr data, uint byteLength, JavaScriptObjectFinalizeCallback finalizeCallback, IntPtr callbackState, out bool result);
+        internal static extern JavaScriptErrorCode JsCreateExternalArrayBuffer(IntPtr data, uint byteLength, JavaScriptObjectFinalizeCallback finalizeCallback, IntPtr callbackState, out JavaScriptValue result);
 
         [DllImport(DllName)]
         internal static extern JavaScriptErrorCode JsGetTypedArrayInfo(JavaScriptValue typedArray, out JavaScriptTypedArrayType arrayType, out JavaScriptValue arrayBuffer, out uint byteOffset, out uint byteLength);
