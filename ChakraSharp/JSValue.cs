@@ -11,20 +11,38 @@ namespace ChakraSharp
 {
     public struct JSValue
     {
-        public JavaScriptValue rawvalue;
+        readonly public JavaScriptValue rawvalue;
+
+        public JSValue(JavaScriptValue val)
+        {
+            rawvalue = val;
+        }
 
         static public JSValue FromObject(object value)
         {
-            var v = new JSValue();
-            v.rawvalue = JavaScriptValue.Undefined;
-            v.SetValue(value);
+            var v = new JSValue(FromValue(value));
             return v;
         }
         static public JSValue Make(JavaScriptValue value)
         {
-            var v = new JSValue();
-            v.rawvalue = value;
+            var v = new JSValue(value);
             return v;
+        }
+        static public JSValue Null
+        {
+            get
+            {
+                var v = new JSValue(JavaScriptValue.Null);
+                return v;
+            }
+        }
+        static public JSValue Undefined
+        {
+            get
+            {
+                var v = new JSValue(JavaScriptValue.Undefined);
+                return v;
+            }
         }
 
         public bool IsNull
@@ -267,102 +285,86 @@ namespace ChakraSharp
                     return null;
             }
         }
-        public void SetValue(object o)
+        static JavaScriptValue FromValue(object o)
         {
             if (o == null)
             {
-                rawvalue = JavaScriptValue.Null;
-                return;
+                return JavaScriptValue.Null;
             }
             switch (Type.GetTypeCode(o.GetType()))
             {
                 case TypeCode.Boolean:
-                    rawvalue = JavaScriptValue.FromBoolean((bool)o);
-                    break;
+                    return JavaScriptValue.FromBoolean((bool)o);
 
                 case TypeCode.Char:
-                    rawvalue = JavaScriptValue.FromString(new string((char)o, 1));
-                    break;
+                    return JavaScriptValue.FromString(new string((char)o, 1));
 
                 case TypeCode.DateTime:
-                    rawvalue = JavaScriptValue.Null;
-                    break;
+                    return JavaScriptValue.Null;
 
                 case TypeCode.DBNull:
                 case TypeCode.Empty:
-                    rawvalue = JavaScriptValue.Null;
-                    break;
+                    return JavaScriptValue.Null;
 
                 case TypeCode.Single:
-                    rawvalue = JavaScriptValue.FromDouble((double)(float)o);
-                    break;
+                    return JavaScriptValue.FromDouble((double)(float)o);
                 case TypeCode.Double:
-                    rawvalue = JavaScriptValue.FromDouble((double)o);
-                    break;
+                    return JavaScriptValue.FromDouble((double)o);
                 case TypeCode.SByte:
-                    rawvalue = JavaScriptValue.FromInt32((int)(sbyte)o);
-                    break;
+                    return JavaScriptValue.FromInt32((int)(sbyte)o);
                 case TypeCode.Int16:
-                    rawvalue = JavaScriptValue.FromInt32((int)(Int16)o);
-                    break;
+                    return JavaScriptValue.FromInt32((int)(Int16)o);
                 case TypeCode.Int32:
-                    rawvalue = JavaScriptValue.FromInt32((int)(Int32)o);
-                    break;
+                    return JavaScriptValue.FromInt32((int)(Int32)o);
                 case TypeCode.Int64:
-                    rawvalue = JavaScriptValue.FromDouble((double)(Int64)o);
-                    break;
+                    return JavaScriptValue.FromDouble((double)(Int64)o);
                 case TypeCode.Byte:
-                    rawvalue = JavaScriptValue.FromInt32((int)(byte)o);
-                    break;
+                    return JavaScriptValue.FromInt32((int)(byte)o);
                 case TypeCode.UInt16:
-                    rawvalue = JavaScriptValue.FromInt32((int)(UInt16)o);
-                    break;
+                    return JavaScriptValue.FromInt32((int)(UInt16)o);
                 case TypeCode.UInt32:
-                    rawvalue = JavaScriptValue.FromDouble((double)(UInt32)o);
-                    break;
+                    return JavaScriptValue.FromDouble((double)(UInt32)o);
                 case TypeCode.UInt64:
-                    rawvalue = JavaScriptValue.FromDouble((double)(UInt64)o);
-                    break;
+                    return JavaScriptValue.FromDouble((double)(UInt64)o);
                 case TypeCode.Decimal:
-                    rawvalue = JavaScriptValue.FromDouble((double)(decimal)o);
-                    break;
+                    return JavaScriptValue.FromDouble((double)(decimal)o);
 
                 case TypeCode.String:
-                    rawvalue = JavaScriptValue.FromString((string)o);
-                    break;
+                    return JavaScriptValue.FromString((string)o);
 
                 case TypeCode.Object:
                     if (o is JavaScriptNativeFunction)
                     {
                         var dg = (JavaScriptNativeFunction)o;
                         GCHandle.Alloc(dg);
-                        rawvalue = JavaScriptValue.CreateFunction(dg);
+                        return JavaScriptValue.CreateFunction(dg);
                     }
                     else if (o is Delegate)
                     {
-                        rawvalue = Port.Util.WrapDelegate((Delegate)o);
+                        return Port.Util.WrapDelegate((Delegate)o);
                     }
                     else if (o is JavaScriptValue)
                     {
-                        rawvalue = (JavaScriptValue)o;
+                        return (JavaScriptValue)o;
                     }
                     else if (o is JSValue)
                     {
-                        rawvalue = ((JSValue)o).rawvalue;
+                        return ((JSValue)o).rawvalue;
                     }
                     else if (o is Type)
                     {
                         var wrapped = Port.TypeWrapper.Wrap((Type)o);
-                        rawvalue = wrapped.constructorValue;
+                        return wrapped.constructorValue;
                     }
                     else
                     {
                         var wrapped = Port.TypeWrapper.Wrap(o.GetType());
-                        rawvalue = JavaScriptValue.CreateExternalObject(GCHandle.ToIntPtr(GCHandle.Alloc(o)), HandleFinalizeDg);
+                        var rawvalue = JavaScriptValue.CreateExternalObject(GCHandle.ToIntPtr(GCHandle.Alloc(o)), HandleFinalizeDg);
                         rawvalue.Prototype = wrapped.prototypeValue;
+                        return rawvalue;
                     }
-                    break;
-
+                default:
+                    return JavaScriptValue.Undefined;
             }
         }
         static JavaScriptObjectFinalizeCallback HandleFinalizeDg = HandleFinalize;
@@ -454,6 +456,12 @@ namespace ChakraSharp
             JavaScriptValue ret;
             Native.ThrowIfError(Native.JsCallFunction(this.rawvalue, contextAndArguments, (ushort)contextAndArguments.Length, out ret));
             return JSValue.Make(ret);
+        }
+        public JavaScriptValue CallFast(params JavaScriptValue[] contextAndArguments)
+        {
+            JavaScriptValue ret;
+            Native.ThrowIfError(Native.JsCallFunction(this.rawvalue, contextAndArguments, (ushort)contextAndArguments.Length, out ret));
+            return ret;
         }
         public JSValue New(JSValue[] contextAndArguments)
         {

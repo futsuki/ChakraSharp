@@ -26,10 +26,21 @@ namespace ChakraSharp
             runtime.CollectGarbage();
         }
 
-        public void Execute(string js)
+        public JSValue Null
         {
-            Evaluate(js);
+            get
+            {
+                return JSValue.Null;
+            }
         }
+        public JSValue Undefined
+        {
+            get
+            {
+                return JSValue.Undefined;
+            }
+        }
+
         static void ThrowError(JavaScriptErrorCode err, string location)
         {
             var sb = new System.Text.StringBuilder();
@@ -118,11 +129,11 @@ namespace ChakraSharp
             throw new ChakraSharpException(sb.ToString(), obj as Exception);
             //return sb.ToString();
         }
-        public JSValue Evaluate(string js)
+        public void Execute(string js)
         {
-            return Evaluate(js, "Evaluate");
+            Evaluate(js);
         }
-        public JSValue Evaluate(string js, string sourceName)
+        public void Execute(string js, string sourceName)
         {
             JavaScriptValue result;
 
@@ -138,8 +149,29 @@ namespace ChakraSharp
             {
                 Native.ThrowIfError(err);
             }
+        }
+        public JSValue Evaluate(string js)
+        {
+            return Evaluate(js, "Evaluate");
+        }
+        public JSValue Evaluate(string js, string sourceName)
+        {
+            JavaScriptValue result;
+            var err = Native.JsRunScript(js, currentSourceContext++, sourceName, out result);
+            if (err == JavaScriptErrorCode.ScriptException ||
+                err == JavaScriptErrorCode.ScriptCompile ||
+                err == JavaScriptErrorCode.InExceptionState)
+            {
+                ThrowError(err, sourceName);
+                //throw new ChakraSharpException(ErrorToString(err, sourceName));
+            }
+            else
+            {
+                Native.ThrowIfError(err);
+            }
             return JSValue.Make(result);
         }
+
 
         public void Dispose()
         {
@@ -183,5 +215,36 @@ namespace ChakraSharp
             }
         }
         */
+
+
+
+        public JSValue WrapType<T>()
+        {
+            return ChakraSharp.Port.Util.WrapType(typeof(T));
+        }
+        public JSValue Wrap(Type t)
+        {
+            return ChakraSharp.Port.Util.WrapType(t);
+        }
+        public JSValue WrapNamespace(string namespacePath)
+        {
+            return ChakraSharp.Port.Util.WrapNamespace(namespacePath);
+        }
+        public JSValue Wrap(Delegate dg)
+        {
+            return ChakraSharp.Port.Util.WrapDelegate(dg);
+        }
+        public JSValue Wrap(MethodInfo mi)
+        {
+            return ChakraSharp.Port.Util.WrapMethod(mi);
+        }
+        public JSValue Wrap(ConstructorInfo o)
+        {
+            return ChakraSharp.Port.Util.WrapConstructor(o);
+        }
+        public JSValue WrapObject(object o)
+        {
+            return ChakraSharp.Port.Util.WrapObject(o);
+        }
     }
 }

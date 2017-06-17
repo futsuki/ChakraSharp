@@ -20,7 +20,7 @@ namespace ChakraSharp.Tests
         {
             var c = new Controller();
 
-            GC.Collect(); // clear cache
+            GC.Collect(); // clear cache, for detecting memory management error
 
             c.Evaluate("function jsfun1(v) { return +v + 100; };");
             c.Global["log"] = (JavaScriptNativeFunction)Log;
@@ -34,11 +34,11 @@ namespace ChakraSharp.Tests
         {
             using (var c = MakeController())
             {
-                c.Global["M"] = Port.Util.WrapNamespace("System.Math");
+                c.Global["M"] = c.WrapNamespace("System.Math");
                 Assert.IsTrue((double)c.Evaluate("M.Sin(0)").GetObject() == Math.Sin(0));
-                c.Global["clrmath"] = Port.Util.WrapType(typeof(Math));
-                c.Global["clrmath2"] = Port.Util.WrapType(typeof(Math));
-                c.Global["System"] = Port.Util.WrapNamespace("System");
+                c.Global["clrmath"] = c.Wrap(typeof(Math));
+                c.Global["clrmath2"] = c.Wrap(typeof(Math));
+                c.Global["System"] = c.WrapNamespace("System");
                 Assert.IsTrue(ApproxEquals((double)c.Evaluate("System.Math.Sin(0.1)").GetObject(), Math.Sin(0.1)));
             }
         }
@@ -52,7 +52,7 @@ namespace ChakraSharp.Tests
                 Func<int> f = () => 1;
                 Action a = () =>
                 {
-                    c.Global["f1"] = Port.Util.WrapDelegate(f);
+                    c.Global["f1"] = c.Wrap(f);
                     c.Evaluate("f1()");
                 };
                 for (var i = 0; i < 10; i++)
@@ -69,7 +69,7 @@ namespace ChakraSharp.Tests
             {
                 Action a = () =>
                 {
-                    c.Global["f2"] = Port.Util.WrapMethod(typeof(ControllerTests).GetMethod("test1"));
+                    c.Global["f2"] = c.Wrap(typeof(ControllerTests).GetMethod("test1"));
                     c.Evaluate("f2()");
                 };
                 for (var i = 0; i < 10; i++)
@@ -86,7 +86,7 @@ namespace ChakraSharp.Tests
             {
                 Action a = () =>
                 {
-                    c.Global["clrmath"] = Port.Util.WrapType(typeof(Math));
+                    c.Global["clrmath"] = c.Wrap(typeof(Math));
                 };
                 for (var i = 0; i < 10; i++)
                 {
@@ -102,7 +102,7 @@ namespace ChakraSharp.Tests
             {
                 Action a = () =>
                 {
-                    c.Global["clrmath"] = Port.Util.WrapType(typeof(Math));
+                    c.Global["clrmath"] = c.Wrap(typeof(Math));
                     c.Evaluate("clrmath.Sin(1)");
                 };
                 for (var i = 0; i < 10; i++)
@@ -119,7 +119,7 @@ namespace ChakraSharp.Tests
             {
                 Action a = () =>
                 {
-                    c.Global["System"] = Port.Util.WrapNamespace("System");
+                    c.Global["System"] = c.WrapNamespace("System");
                 };
                 for (var i = 0; i < 10; i++)
                 {
@@ -135,7 +135,7 @@ namespace ChakraSharp.Tests
             {
                 Action a = () =>
                 {
-                    c.Global["System"] = Port.Util.WrapNamespace("System");
+                    c.Global["System"] = c.WrapNamespace("System");
                     Assert.IsTrue(ApproxEquals((double)c.Evaluate("System.Math.Sin(0.1)").GetObject(), Math.Sin(0.1)));
                 };
                 for (var i = 0; i < 10; i++)
@@ -171,7 +171,7 @@ namespace ChakraSharp.Tests
             //using (var c = MakeController())
             var c = MakeController();
             {
-                c.Global["Math"] = Port.Util.WrapType(typeof(System.Math));
+                c.Global["Math"] = c.Wrap(typeof(System.Math));
                 for (var i = 0; i < 1000; i++)
                 {
                     var bytes = new byte[10000];
@@ -191,7 +191,7 @@ namespace ChakraSharp.Tests
                 Console.WriteLine(i);
                 var c = MakeController();
                 {
-                    c.Global["Math"] = Port.Util.WrapType(typeof(System.Math));
+                    c.Global["Math"] = c.Wrap(typeof(System.Math));
 
                     //var bytes = new byte[10000];
                     Console.WriteLine(i + ": " + GC.GetTotalMemory(false));
@@ -211,7 +211,7 @@ namespace ChakraSharp.Tests
         {
             using (var c = MakeController())
             {
-                c.Global["DGList1"] = Port.Util.WrapType(typeof(DGList1));
+                c.Global["DGList1"] = c.Wrap(typeof(DGList1));
                 c.Evaluate("var dgl = new DGList1();");
                 c.Evaluate("var val = 10;");
                 c.Evaluate("dgl.lst.Add(function() { val += 1; });");
@@ -228,7 +228,7 @@ namespace ChakraSharp.Tests
         {
             using (var c = MakeController())
             {
-                c.Global["DGList2"] = Port.Util.WrapType(typeof(DGList2));
+                c.Global["DGList2"] = c.Wrap(typeof(DGList2));
                 c.Evaluate("var dgl = new DGList2();");
                 c.Evaluate("var val = 10;");
                 c.Evaluate("dgl.Add(function() { val += 1; });");
@@ -245,7 +245,7 @@ namespace ChakraSharp.Tests
         {
             using (var c = MakeController())
             {
-                c.Global["DGTestClass1"] = Port.Util.WrapType(typeof(DGTestClass1));
+                c.Global["DGTestClass1"] = c.Wrap(typeof(DGTestClass1));
                 c.Evaluate("var val = 10;");
                 c.Evaluate("var dg = function() { val += 1; };");
                 c.Evaluate("DGTestClass1.dg = function() { val += 2; };");
@@ -261,7 +261,7 @@ namespace ChakraSharp.Tests
         {
             using (var c = MakeController())
             {
-                c.Global["DGList3"] = Port.Util.WrapType(typeof(DGList3));
+                c.Global["DGList3"] = c.Wrap(typeof(DGList3));
                 c.Evaluate("var dgl = new DGList3();");
                 c.Evaluate("var val = 40;");
                 c.Evaluate("dgl.lst.Add(function() { val += 1; });");
@@ -322,7 +322,7 @@ namespace ChakraSharp.Tests
         {
             using (var c = MakeController())
             {
-                c.Global["System"] = Port.Util.WrapNamespace("System");
+                c.Global["System"] = c.WrapNamespace("System");
                 //Console.WriteLine(c.Evaluate("System.Math.Sin(0.1)").ToString());
                 //Console.WriteLine(c.Evaluate("System.Math.Sin(0.1)()").ToString());
                 Assert.IsTrue(ApproxEquals((double)c.Evaluate("System.Math.Sin(0.1)").GetObject(), Math.Sin(0.1)));
@@ -347,6 +347,24 @@ return sb.ToString();
                 Assert.IsTrue(c.Global["val"].ToDouble() == 10.1);
                 c.Global["val"] = 20;
                 Assert.IsTrue(c.Global["val"].ToDouble() == 20);
+            }
+        }
+        [TestMethod()]
+        public void VarTest2()
+        {
+            using (var c = MakeController())
+            {
+                var v = JSValue.Null;
+                var nu = JavaScriptValue.Null;
+                Console.WriteLine(v);
+                Console.WriteLine(nu);
+                v = JSValue.Undefined;
+                nu = JavaScriptValue.Undefined;
+                Console.WriteLine(v);
+                Console.WriteLine(nu);
+                //Assert.IsTrue(v.IsNull);
+                //v = c.Evaluate("(function() { return 12; })");
+                //Assert.IsTrue(v.Call(c.Null).ToDouble() == 12);
             }
         }
         [TestMethod()]
@@ -460,8 +478,8 @@ return sb.ToString();
         {
             using (var c = MakeController())
             {
-                c.Global["clrmath"] = Port.Util.WrapType(typeof(Math));
-                c.Global["clrtest1"] = Port.Util.WrapType(typeof(TestCls1));
+                c.Global["clrmath"] = c.Wrap(typeof(Math));
+                c.Global["clrtest1"] = c.Wrap(typeof(TestCls1));
 
                 Assert.IsTrue((double)c.Evaluate("clrmath.Sqrt(100)").GetObject() == 10);
                 Assert.IsTrue((double)c.Evaluate("clrtest1.simpleFunction(100)").GetObject() == 110);
@@ -509,11 +527,11 @@ return sb.ToString();
         {
             using (var c = MakeController())
             {
-                c.Global["portctor1"] = Port.Util.WrapType(typeof(TestCls1));
-                //c.Global["portctor1"] = Port.Util.WrapConstructor(typeof(TestCls1).GetConstructors()[0]);
-                c.Global["portmethod1"] = Port.Util.WrapMethod(typeof(TestCls1).GetMethod("jvtest2"));
-                c.Global["portmethod2"] = Port.Util.WrapMethod(typeof(TestCls1).GetMethod("jvtest3"));
-                c.Global["portmethod2"] = Port.Util.WrapMethod(typeof(TestCls1).GetMethod("jvtest3"));
+                c.Global["portctor1"] = c.Wrap(typeof(TestCls1));
+                //c.Global["portctor1"] = c.Wrap(typeof(TestCls1).GetConstructors()[0]);
+                c.Global["portmethod1"] = c.Wrap(typeof(TestCls1).GetMethod("jvtest2"));
+                c.Global["portmethod2"] = c.Wrap(typeof(TestCls1).GetMethod("jvtest3"));
+                c.Global["portmethod2"] = c.Wrap(typeof(TestCls1).GetMethod("jvtest3"));
                 c.Evaluate("var portobjerr = portctor1(1)");
                 c.Evaluate("var portobj1 = new portctor1(1)");
                 Assert.IsTrue(!(c.Evaluate("portobjerr").GetObject() is TestCls1));
@@ -533,13 +551,13 @@ return sb.ToString();
         {
             using (var c = MakeController())
             {
-                c.Global["portoc1"] = Port.Util.WrapType(typeof(TestCls1));
+                c.Global["portoc1"] = c.Wrap(typeof(TestCls1));
                 c.Evaluate("var portocobj1 = new portoc1(1)");
-                c.Global["portoc2"] = Port.Util.WrapType(typeof(TestCls1));
+                c.Global["portoc2"] = c.Wrap(typeof(TestCls1));
                 c.Evaluate("var portocobj2 = new portoc2(1)");
-                c.Global["portoc3"] = Port.Util.WrapType(typeof(TestCls1));
+                c.Global["portoc3"] = c.Wrap(typeof(TestCls1));
                 c.Evaluate("var portocobj3 = new portoc3(1)");
-                c.Global["portoc4"] = Port.Util.WrapType(typeof(TestCls1));
+                c.Global["portoc4"] = c.Wrap(typeof(TestCls1));
                 c.Evaluate("var portocobj4 = new portoc4(1)");
             }
         }
@@ -548,7 +566,7 @@ return sb.ToString();
         {
             using (var c = MakeController())
             {
-                c.Global["portoc1"] = Port.Util.WrapType(typeof(TestCls1));
+                c.Global["portoc1"] = c.Wrap(typeof(TestCls1));
                 c.Evaluate("var portocobj1 = new portoc1(1)");
                 var v = c.Evaluate("portoc1.overloadedFunction(10)");
                 Assert.IsTrue(c.Evaluate("portocobj1").GetObject() is TestCls1);
@@ -562,7 +580,7 @@ return sb.ToString();
         {
             using (var c = MakeController())
             {
-                c.Global["portoc1"] = Port.Util.WrapType(typeof(TestCls1));
+                c.Global["portoc1"] = c.Wrap(typeof(TestCls1));
                 c.Evaluate("var portocobj1 = new portoc1(1)");
                 var v = c.Evaluate("portoc1.overloadedFunction(10)");
                 Assert.IsTrue(c.Evaluate("portocobj1").GetObject() is TestCls1);
@@ -577,7 +595,7 @@ return sb.ToString();
         {
             using (var c = MakeController())
             {
-                c.Global["portoc1"] = Port.Util.WrapType(typeof(TestCls1));
+                c.Global["portoc1"] = c.Wrap(typeof(TestCls1));
                 c.Evaluate("var portocobj1 = new portoc1(1)");
                 Assert.IsTrue(c.Evaluate("portocobj1").GetObject() is TestCls1);
                 Assert.IsTrue((string)c.Evaluate("portoc1.overloadedFunction(\"hoge\")").GetObject() == "hogestr");
@@ -588,7 +606,7 @@ return sb.ToString();
         {
             using (var c = MakeController())
             {
-                c.Global["portmath"] = Port.Util.WrapType(typeof(Math));
+                c.Global["portmath"] = c.Wrap(typeof(Math));
                 Assert.IsTrue((double)c.Evaluate("portmath.Sin(0)").GetObject() == Math.Sin(0.0));
                 Assert.IsTrue((double)c.Evaluate("portmath.Ceiling(0.2)").GetObject() == Math.Ceiling(0.2));
                 Assert.IsTrue((double)c.Evaluate("portmath.Round(0.2)").GetObject() == Math.Round(0.2));
@@ -614,7 +632,7 @@ return sb.ToString();
         {
             using (var c = MakeController())
             {
-                c.Global["portoc1"] = Port.Util.WrapType(typeof(TestCls1));
+                c.Global["portoc1"] = c.Wrap(typeof(TestCls1));
                 c.Evaluate("portoc1.actionFunction()");
                 c.Evaluate("(new portoc1(1)).actionMethod()");
             }
@@ -683,8 +701,8 @@ return sb.ToString();
         {
             using (var c = MakeController())
             {
-                c.Global["System"] = Port.Util.WrapNamespace("System");
-                c.Global["GList"] = Port.Util.WrapType(typeof(List<>));
+                c.Global["System"] = c.WrapNamespace("System");
+                c.Global["GList"] = c.Wrap(typeof(List<>));
                 //c.Evaluate("var intlist = System.Collections.Generic.List(System.Int32);");
                 c.Evaluate("var intlist = GList(System.Int32);");
                 c.Evaluate("var il = new intlist()");
@@ -775,7 +793,7 @@ return sb.ToString();
         {
             using (var c = MakeController())
             {
-                c.Global["TestClass1"] = Port.Util.WrapType(typeof(TestClass1));
+                c.Global["TestClass1"] = c.Wrap(typeof(TestClass1));
                 c.Evaluate("var obj = new TestClass1()");
                 c.Evaluate("TestClass1.stNumber = 10;");
                 Assert.IsTrue((double)c.Evaluate("TestClass1.stNumber").GetObject() == 10);
@@ -816,7 +834,7 @@ return sb.ToString();
         {
             using (var c = MakeController())
             {
-                c.Global["TestClass2"] = Port.Util.WrapType(typeof(TestClass2));
+                c.Global["TestClass2"] = c.Wrap(typeof(TestClass2));
                 c.Evaluate("var obj = new TestClass2()");
                 c.Evaluate("TestClass2.stNumber = 100;");
                 Assert.IsTrue((double)c.Evaluate("TestClass2.stNumber").GetObject() == 100);
@@ -840,7 +858,7 @@ return sb.ToString();
         {
             using (var c = MakeController())
             {
-                c.Global["TestClass3"] = Port.Util.WrapType(typeof(TestClass2.TestClass3));
+                c.Global["TestClass3"] = c.Wrap(typeof(TestClass2.TestClass3));
                 c.Evaluate("var obj = new TestClass3()");
                 c.Evaluate("TestClass3.stNumber = 100;");
                 Assert.IsTrue((double)c.Evaluate("TestClass3.stNumber").GetObject() == 100);
@@ -865,7 +883,7 @@ return sb.ToString();
         {
             using (var c = MakeController())
             {
-                c.Global["Tests"] = Port.Util.WrapNamespace("ChakraSharp.Tests");
+                c.Global["Tests"] = c.WrapNamespace("ChakraSharp.Tests");
                 c.Evaluate("var obj = new Tests.ControllerTests.TestClass2.TestClass3()");
                 c.Evaluate("Tests.ControllerTests.TestClass2.TestClass3.stNumber = 100;");
                 Assert.IsTrue((double)c.Evaluate("Tests.ControllerTests.TestClass2.TestClass3.stNumber").GetObject() == 100);
@@ -921,7 +939,7 @@ return sb.ToString();
         {
             using (var c = MakeController())
             {
-                c.Global["System"] = Port.Util.WrapNamespace("System");
+                c.Global["System"] = c.WrapNamespace("System");
                 Assert.AreEqual(c.Evaluate("System").ToString(), "System");
                 Assert.AreEqual(c.Evaluate("System.Math").ToString(), "System.Math");
                 Assert.AreEqual(c.Evaluate("System.Linq").ToString(), "System.Linq");
@@ -954,7 +972,7 @@ return sb.ToString();
         {
             using (var c = MakeController())
             {
-                c.Global["TestStruct1"] = Port.Util.WrapType(typeof(TestStruct1));
+                c.Global["TestStruct1"] = c.Wrap(typeof(TestStruct1));
                 c.Evaluate("var obj = new TestStruct1()");
                 c.Evaluate("TestStruct1.stNumber = 100;");
                 Assert.IsTrue((double)c.Evaluate("TestStruct1.stNumber").GetObject() == 100);
