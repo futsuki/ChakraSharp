@@ -16,14 +16,14 @@ System.Console.WriteLine(c.Evaluate("jsfun1(10)").ToDouble());
 ### CLR Type Wrapping
 ```C#
 var c = new ChakraSharp.Controller();
-c.Global["clrmath"] = ChakraSharp.Port.Util.WrapType(typeof(System.Math));
+c.Global["clrmath"] = c.Wrap(typeof(System.Math));
 System.Console.WriteLine(c.Evaluate("clrmath.Sin(0.1)").ToDouble());
 //-> 0.09983341664
 ```
 ### CLR Namespace Wrapping
 ```C#
 var c = new ChakraSharp.Controller();
-c.Global["System"] = ChakraSharp.Port.Util.WrapNamespace("System");
+c.Global["System"] = c.WrapNamespace("System");
 var js = @"
 (function() {
 var sb = new System.Text.StringBuilder();
