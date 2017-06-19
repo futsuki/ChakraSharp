@@ -252,24 +252,24 @@ namespace ChakraSharp.Port
         static string OverloadToString(string name, OverloadEntry oe)
         {
             var sb = new StringBuilder();
-            sb.Append($"{name}(");
+            sb.AppendFormat("{0}(", name);
             bool first = true;
             foreach (var p in oe.ps)
             {
-                sb.Append($"{p.parameterType} {p.name}");
+                sb.AppendFormat("{0} {1}", p.parameterType, p.name);
                 if (first)
                 {
                     first = false;
                     sb.Append(", ");
                 }
             }
-            sb.Append($")");
+            sb.Append(")");
             return sb.ToString();
         }
         static string CallToString(string name, JavaScriptValue[] arguments)
         {
             var sb = new StringBuilder();
-            sb.Append($"{name}(");
+            sb.AppendFormat($"{0}(", name);
             bool first = true;
             foreach (var arg in arguments)
             {
@@ -280,7 +280,7 @@ namespace ChakraSharp.Port
                     sb.Append(", ");
                 }
             }
-            sb.Append($")");
+            sb.Append(")");
             return sb.ToString();
         }
 
