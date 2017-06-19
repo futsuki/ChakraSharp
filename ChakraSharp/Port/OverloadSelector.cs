@@ -17,6 +17,7 @@ namespace ChakraSharp.Port
             public ParameterData[] ps;
             public struct ParameterData
             {
+                public string name;
                 public Type parameterType;
                 public bool isOut;
                 public bool isParams;
@@ -30,12 +31,13 @@ namespace ChakraSharp.Port
                 IEnumerable<ParameterData> ie;
                 if (mi.IsStatic || mi is ConstructorInfo)
                 {
-                    ie = new ParameterData[] { new ParameterData() };
+                    ie = new ParameterData[] { new ParameterData() { name="(static this)" } };
                 }
                 else
                 {
                     ie = new ParameterData[] {
                             new ParameterData {
+                                name = "this",
                                 parameterType = mi.DeclaringType
                             }
                         };
@@ -43,6 +45,7 @@ namespace ChakraSharp.Port
                 ie = ie.Concat(mi.GetParameters().Select(e =>
                 {
                     var d = new ParameterData();
+                    d.name = e.Name;
                     d.parameterType = e.ParameterType;
                     d.isOut = e.IsOut;
                     d.isParams = e.IsDefined(typeof(ParamArrayAttribute), false);
@@ -85,7 +88,8 @@ namespace ChakraSharp.Port
                 int score = 0;
                 for (int i = 0; i < arguments.Length; i++)
                 {
-                    score += CalcScore(ps[i].parameterType, arguments[i]);
+                    var se = CalcScore(ps[i].parameterType, arguments[i]);
+                    score += se;
                 }
                 return score;
             }
@@ -109,53 +113,82 @@ namespace ChakraSharp.Port
                         return false;
                 }
             }
+            static JavaScriptPropertyId clrtypevalueId;
             static int CalcScore(Type pit, JavaScriptValue val)
             {
+                var min = DENIED;
                 if (pit == null) // any type
-                    return ALLOWED;
-                if (pit == typeof(JSValue))
-                    return ALLOWED;
-                if (pit == typeof(JavaScriptValue))
-                    return ALLOWED;
-                if (pit == typeof(object))
-                    return ALLOWED;
+                    min = ALLOWED;
+                else if (pit == typeof(JSValue))
+                    min = ALLOWED;
+                else if (pit == typeof(JavaScriptValue))
+                    min = ALLOWED;
+                else if (pit == typeof(object))
+                    min = ALLOWED;
+
+                // CLR Type Matching
+                if (clrtypevalueId == JavaScriptPropertyId.Invalid)
+                {
+                    clrtypevalueId = JavaScriptPropertyId.FromString("_clrtypevalue");
+                }
+                if (val.ValueType == JavaScriptValueType.Object ||
+                    val.ValueType == JavaScriptValueType.Function) {
+                    var tv = val.GetProperty(clrtypevalueId);
+                    if (tv.ValueType != JavaScriptValueType.Undefined)
+                    {
+                        IntPtr p;
+                        Native.JsGetExternalData(tv, out p);
+                        if (p != IntPtr.Zero)
+                        {
+                            var obj = GCHandle.FromIntPtr(tv.ExternalData).Target;
+                            var objt = obj.GetType();
+                            if (pit == objt)
+                            {
+                                min = Math.Min(min, MATCHED);
+                            }
+                            else if (pit != null && pit.IsAssignableFrom(objt))
+                            {
+                                min = Math.Min(min, ALLOWED);
+                            }
+                        }
+                    }
+                }
+
                 switch (val.ValueType)
                 {
                     case JavaScriptValueType.Boolean:
-                        if (pit != typeof(bool))
-                            return DENIED;
-                        else
-                            return MATCHED;
+                        if (pit == typeof(bool))
+                            min = Math.Min(min, MATCHED);
+                        break;
 
                     case JavaScriptValueType.Function:
-                        if (!typeof(Delegate).IsAssignableFrom(pit))
-                            return DENIED;
-                        else
-                            return ALLOWED;
+                        if (typeof(Delegate).IsAssignableFrom(pit))
+                            min = Math.Min(min, ALLOWED);
+                        break;
 
                     case JavaScriptValueType.Null:
-                        if (pit.IsValueType)
-                            return DENIED;
-                        else
-                            return ALLOWED;
+                        if (!pit.IsValueType)
+                            min = Math.Min(min, ALLOWED);
+                        break;
 
                     case JavaScriptValueType.Number:
-                        if (!IsNumericType(pit))
-                            return DENIED;
-                        if (pit == typeof(double))
-                            return MATCHED;
-                        else if (pit.IsEnum)
-                            return LOWER;
-                        else
-                            return ALLOWED;
+                        if (IsNumericType(pit))
+                        {
+                            if (pit == typeof(double))
+                                min = Math.Min(min, MATCHED);
+                            else if (pit.IsEnum)
+                                min = Math.Min(min, LOWER);
+                            else
+                                min = Math.Min(min, ALLOWED);
+                        }
+                        break;
 
                     case JavaScriptValueType.String:
                         if (pit == typeof(string))
-                            return MATCHED;
+                            min = Math.Min(min, MATCHED);
                         else if (pit.IsEnum)
-                            return LOWER;
-                        else
-                            return DENIED;
+                            min = Math.Min(min, LOWER);
+                        break;
 
                     case JavaScriptValueType.Object:
                         if (val.HasExternalData)
@@ -164,18 +197,16 @@ namespace ChakraSharp.Port
                             var objt = obj.GetType();
                             if (pit == objt)
                             {
-                                return MATCHED;
+                                min = Math.Min(min, MATCHED);
                             }
                             else if (pit.IsAssignableFrom(objt))
                             {
-                                return ALLOWED;
+                                min = Math.Min(min, ALLOWED);
                             }
                         }
-                        return DENIED;
+                        break;
 
                     case JavaScriptValueType.Undefined:
-                        return DENIED;
-
                     case JavaScriptValueType.Array:
                     case JavaScriptValueType.ArrayBuffer:
                     case JavaScriptValueType.DataView:
@@ -183,8 +214,9 @@ namespace ChakraSharp.Port
                     case JavaScriptValueType.Symbol:
                     case JavaScriptValueType.TypedArray:
                     default:
-                        return DENIED;
+                        break;
                 }
+                return min;
             }
         }
         List<OverloadEntry> methodInfos = new List<OverloadEntry>();
@@ -217,6 +249,41 @@ namespace ChakraSharp.Port
             return body;
         }
 
+        static string OverloadToString(string name, OverloadEntry oe)
+        {
+            var sb = new StringBuilder();
+            sb.Append($"{name}(");
+            bool first = true;
+            foreach (var p in oe.ps)
+            {
+                sb.Append($"{p.parameterType} {p.name}");
+                if (first)
+                {
+                    first = false;
+                    sb.Append(", ");
+                }
+            }
+            sb.Append($")");
+            return sb.ToString();
+        }
+        static string CallToString(string name, JavaScriptValue[] arguments)
+        {
+            var sb = new StringBuilder();
+            sb.Append($"{name}(");
+            bool first = true;
+            foreach (var arg in arguments)
+            {
+                sb.Append(arg.ConvertToString().ToString());
+                if (first)
+                {
+                    first = false;
+                    sb.Append(", ");
+                }
+            }
+            sb.Append($")");
+            return sb.ToString();
+        }
+
         static JavaScriptValue body(JavaScriptValue callee,
             [MarshalAs(UnmanagedType.U1)] bool isConstructCall,
             [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] JavaScriptValue[] arguments,
@@ -227,7 +294,7 @@ namespace ChakraSharp.Port
             {
                 var that = (OverloadSelector)GCHandle.FromIntPtr(callbackData).Target;
                 var lastIdx = -1;
-                var lowestScore = OverloadEntry.DENIED - 1;
+                var lowestScore = OverloadEntry.DENIED - 1; // block denied
                 for (int i = 0; i < that.methodInfos.Count; i++)
                 {
                     var mi = that.methodInfos[i];

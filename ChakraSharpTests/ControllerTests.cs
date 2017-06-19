@@ -1112,6 +1112,32 @@ return sb.ToString();
         {
             GCHandle.FromIntPtr(p).Free();
         }
+
+
+        [TestMethod()]
+        public void OverloadTest1()
+        {
+            using (var c = MakeController())
+            {
+                c.Global["cls"] = c.Wrap(typeof(OverloadTestClass1));
+                c.Global["GetType"] = c.Wrap((Func<string, Type>)Type.GetType);
+                c.Execute("cls.hoge('hoge')");
+                c.Execute("var t = GetType('System.Type, mscorlib')");
+                c.Execute("cls.hoge(t)");
+            }
+        }
+    }
+
+    public class OverloadTestClass1
+    {
+        static public void hoge(string str)
+        {
+            Console.WriteLine("ol1");
+        }
+        static public void hoge(System.Type type)
+        {
+            Console.WriteLine("ol2");
+        }
     }
 
 
