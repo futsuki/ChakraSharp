@@ -1,6 +1,8 @@
 # ChakraSharp
 [ChakraCore](https://github.com/Microsoft/ChakraCore) wrapper in C#
 
+UnityでChakraCoreを使うために作ったものです
+
 今のところLinuxなどでのネイティブバイナリライブラリとの連携方法に詳しくないのでwindowsでしか試しておりません。
 
 .NET 3.5 で動作テストしております。
