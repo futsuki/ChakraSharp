@@ -9,9 +9,9 @@ using System.Reflection;
 
 namespace ChakraSharp
 {
-    public class JSValue
+    public class JSValue: IDisposable
     {
-        readonly public JavaScriptValue rawvalue;
+        public JavaScriptValue rawvalue { get; private set; }
 
         public JSValue(JavaScriptValue val)
         {
@@ -19,10 +19,11 @@ namespace ChakraSharp
             if (rawvalue.IsValid)
                 rawvalue.AddRef();
         }
-        ~JSValue()
+        public void Dispose()
         {
             if (rawvalue.IsValid)
                 rawvalue.Release();
+            rawvalue = JavaScriptValue.Invalid;
         }
 
         static public JSValue FromObject(object value)
