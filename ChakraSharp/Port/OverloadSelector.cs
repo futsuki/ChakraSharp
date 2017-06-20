@@ -191,17 +191,21 @@ namespace ChakraSharp.Port
                         break;
 
                     case JavaScriptValueType.Object:
-                        if (val.HasExternalData)
                         {
-                            var obj = GCHandle.FromIntPtr(val.ExternalData).Target;
-                            var objt = obj.GetType();
-                            if (pit == objt)
+                            IntPtr exPtr;
+                            Native.JsGetExternalData(val, out exPtr);
+                            if (exPtr != IntPtr.Zero)
                             {
-                                min = Math.Min(min, MATCHED);
-                            }
-                            else if (pit.IsAssignableFrom(objt))
-                            {
-                                min = Math.Min(min, ALLOWED);
+                                var obj = GCHandle.FromIntPtr(exPtr).Target;
+                                var objt = obj.GetType();
+                                if (pit == objt)
+                                {
+                                    min = Math.Min(min, MATCHED);
+                                }
+                                else if (pit.IsAssignableFrom(objt))
+                                {
+                                    min = Math.Min(min, ALLOWED);
+                                }
                             }
                         }
                         break;

@@ -9,13 +9,20 @@ using System.Reflection;
 
 namespace ChakraSharp
 {
-    public struct JSValue
+    public class JSValue
     {
         readonly public JavaScriptValue rawvalue;
 
         public JSValue(JavaScriptValue val)
         {
             rawvalue = val;
+            if (rawvalue.IsValid)
+                rawvalue.AddRef();
+        }
+        ~JSValue()
+        {
+            if (rawvalue.IsValid)
+                rawvalue.Release();
         }
 
         static public JSValue FromObject(object value)
